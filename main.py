@@ -6,6 +6,7 @@ import feedparser
 from datetime import datetime, timedelta
 import requests
 from openai import OpenAI
+import traceback
 
 # === CONFIG ===
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
@@ -95,24 +96,39 @@ def generate_post_with_llm(title, summary):
 """
     prompt = PROMPT_TEMPLATE.format(title=title, summary=summary)
 
-    # Инициализация клиента через HF Router (OpenAI-совместимый)
-    client = OpenAI(
-        base_url="https://router.huggingface.co/v1",
-        api_key=os.environ["HF_TOKEN"]
-    )
+    print("📝 Отправляю промпт в LLM:")
+    print("-" * 50)
+    print(prompt[:500] + "..." if len(prompt) > 500 else prompt)
+    print("-" * 50)
 
-    # Вызов модели через Together AI
-    completion = client.chat.completions.create(
-        model="Qwen/Qwen2.5-7B-Instruct:together",
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.9,
-        max_tokens=600,
-        top_p=0.95
-    )
+    try:
+        client = OpenAI(
+            base_url="https://router.huggingface.co/v1",
+            api_key=os.environ["HF_TOKEN"]
+        )
 
-    return completion.choices[0].message.content.strip()
+        completion = client.chat.completions.create(
+            model="Qwen/Qwen2.5-7B-Instruct:together",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.9,
+            max_tokens=600,
+            timeout=60
+        )
+
+        result = completion.choices[0].message.content.strip()
+        print("✅ LLM вернул ответ:")
+        print("-" * 50)
+        print(result[:500] + "..." if len(result) > 500 else result)
+        print("-" * 50)
+        return result
+
+    except Exception as e:
+        print("❌ ОШИБКА при вызове LLM:")
+        print(f"Тип: {type(e).__name__}")
+        print(f"Сообщение: {str(e)}")
+        print("Подробный стек:")
+        traceback.print_exc()
+        raise  # пробрасываем, чтобы workflow упал — это важно для отладки
 
 # === KANDINSKY ===
 def generate_image_with_kandinsky(prompt):
@@ -205,3 +221,5 @@ if __name__ == "__main__":
         send_to_telegram(fallback_text)
 
     save_seen(seen_titles)
+
+print("🏁 Скрипт завершён. Всего обработано новостей:", len(news))
