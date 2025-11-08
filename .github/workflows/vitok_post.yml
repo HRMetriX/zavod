@@ -39,4 +39,5 @@ jobs:
           git config --global user.email "vitok@bot.com"
           git add seen.json
           git commit -m "Update seen titles" || echo "No changes"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/HRMetriX/zavod.git
           git push
