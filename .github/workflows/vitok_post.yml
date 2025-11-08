@@ -30,7 +30,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           FUSIONBRAIN_API_KEY: ${{ secrets.FUSIONBRAIN_API_KEY }}
-          TELEGRAM_CHANNEL: "@your_channel_here"  # ← замени на свой!
+          TELEGRAM_CHANNEL: "@notreviews"  # ← замени на свой!
         run: python main.py
 
       - name: Save seen.json (to avoid duplicates)
