@@ -1,0 +1,42 @@
+name: Vitok News Post
+
+on:
+  # Ручной запуск из веб-интерфейса
+  workflow_dispatch:
+
+  # Автозапуск в 10:00 и 18:00 по МСК (07:00 и 15:00 UTC)
+  schedule:
+    - cron: '0 7 * * *'   # 10:00 MSK
+    - cron: '0 15 * * *'  # 18:00 MSK
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install feedparser requests
+
+      - name: Run Vitok Bot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          FUSIONBRAIN_API_KEY: ${{ secrets.FUSIONBRAIN_API_KEY }}
+          TELEGRAM_CHANNEL: "@your_channel_here"  # ← замени на свой!
+        run: python main.py
+
+      - name: Save seen.json (to avoid duplicates)
+        run: |
+          git config --global user.name "Vitok Bot"
+          git config --global user.email "vitok@bot.com"
+          git add seen.json
+          git commit -m "Update seen titles" || echo "No changes"
+          git push
