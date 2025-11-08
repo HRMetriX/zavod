@@ -72,7 +72,7 @@ def generate_post_with_llm(title, summary):
 """
     prompt = PROMPT_TEMPLATE.format(title=title, summary=summary)
 
-    API_URL = "https://api-inference.huggingface.co/models/IlyaGusev/saiga_llama3_8b"
+    API_URL = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct"
     headers = {"Authorization": f"Bearer {HF_TOKEN}"}
     payload = {
         "inputs": prompt,
