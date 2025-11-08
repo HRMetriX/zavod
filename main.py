@@ -1,4 +1,3 @@
-# main.py
 import os
 import json
 import time
@@ -11,8 +10,8 @@ import requests
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 HF_TOKEN = os.environ["HF_TOKEN"]
 FB_API_KEY = os.environ["FUSIONBRAIN_API_KEY"]
-FB_SECRET_KEY = os.environ.get("FUSIONBRAIN_SECRET_KEY", "")  # может не понадобиться
-CHANNEL = os.environ.get("TELEGRAM_CHANNEL", "@your_channel_here")  # или "@mychannel"
+GIST_TOKEN = os.environ["GIST_TOKEN"]
+CHANNEL = os.environ.get("TELEGRAM_CHANNEL", "@notreviews")
 
 RSS_SOURCES = [
     "https://ria.ru/export/rss2/archive/index.xml",
@@ -20,20 +19,43 @@ RSS_SOURCES = [
     "https://lenta.ru/rss/",
 ]
 
-# Загружаем уже обработанные заголовки
-if os.path.exists("seen.json"):
-    with open("seen.json", "r") as f:
-        seen_titles = set(json.load(f))
-else:
-    seen_titles = set()
+# === GIST STATE MANAGEMENT ===
+GIST_ID = "5944017a021bcea90b63cf408a0324e5"
 
-def save_seen():
-    with open("seen.json", "w") as f:
-        json.dump(list(seen_titles), f, ensure_ascii=False)
+def load_seen():
+    url = f"https://api.github.com/gists/{GIST_ID}"
+    headers = {"Authorization": f"token {GIST_TOKEN}"}
+    try:
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            files = resp.json().get("files", {})
+            if "seen.json" in files:
+                content = files["seen.json"].get("content", "[]")
+                return set(json.loads(content))
+        return set()
+    except Exception as e:
+        print(f"⚠️ Ошибка загрузки seen.json из Gist: {e}")
+        return set()
 
+def save_seen(seen_set):
+    url = f"https://api.github.com/gists/{GIST_ID}"
+    headers = {"Authorization": f"token {GIST_TOKEN}"}
+    payload = {
+        "files": {
+            "seen.json": {
+                "content": json.dumps(list(seen_set), ensure_ascii=False, indent=2)
+            }
+        }
+    }
+    try:
+        requests.patch(url, headers=headers, json=payload, timeout=10)
+        print("✅ seen.json обновлён в Gist")
+    except Exception as e:
+        print(f"⚠️ Ошибка сохранения в Gist: {e}")
+
+# === NEWS PARSING ===
 def fetch_political_news(hours=1):
-    """Парсим свежие новости и фильтруем по ключевым словам"""
-    keywords = ["Путин", "президент", "Совбез", "Минобороны", "Лавров", "Шойгу", "назнач", "указ", "Санчик", "Булыга", "Россия", "политик"]
+    keywords = ["Путин", "президент", "Совбез", "Минобороны", "Лавров", "Шойгу", "назнач", "указ", "Санчик", "Булыга", "Россия", "политик", "Си", "Зеленск", "Байден", "Трамп"]
     fresh = []
     cutoff = datetime.now() - timedelta(hours=hours)
 
@@ -45,23 +67,22 @@ def fetch_political_news(hours=1):
                 if pub < cutoff:
                     continue
                 title = entry.title
+                summary = entry.get("summary", "")
                 if title in seen_titles:
                     continue
-                # Фильтр по политике
-                if any(kw in title or kw in entry.get("summary", "") for kw in keywords):
+                if any(kw in title or kw in summary for kw in keywords):
                     fresh.append({
                         "title": title,
-                        "summary": entry.get("summary", "")[:300],
+                        "summary": summary[:300],
                         "link": entry.link
                     })
                     seen_titles.add(title)
         except Exception as e:
             print(f"Ошибка парсинга {url}: {e}")
-    
     return fresh
 
+# === LLM ===
 def generate_post_with_llm(title, summary):
-    """Генерация поста через Hugging Face Inference API"""
     PROMPT_TEMPLATE = """
 Ты — Витёк из гаража: мужик 50+, бывший заводчанин, с лёгкой контузией после китайского крана. Ты пересказываешь политические новости так, будто услышал их от Сан Саныча у ларька или тёти Любы на лавке. Не называй политиков официально — используй прозвища: Путин = Батенька, Лавров = Слоняра, Си = Китаец с рынка и т.д. Переводи санкции, Совбез, Минобороны на язык быта: "санкции = пыль с Запада", "Совбез = диспетчерская по базару". Начинай пост с живой сцены (лавка, огород, пивной ларёк...), добавляй детали вроде "водка подорожала", "у меня огурцы солить", "Петрович, драть его в сраку!". Заканчивай иронично: "А мне-то чё? У меня гараж есть". Подпись: "За Родину-мать не стыдно рвать!" 🇷🇺.
 
@@ -88,20 +109,23 @@ def generate_post_with_llm(title, summary):
     if response.status_code != 200:
         raise Exception(f"HF error: {response.text}")
     
-    generated = response.json()[0]["generated_text"]
-    return generated.strip()
+    full_text = response.json()[0]["generated_text"]
+    # Qwen может вернуть промпт + ответ → оставляем только новое
+    if prompt.strip() in full_text:
+        generated = full_text.split(prompt.strip(), 1)[-1].strip()
+    else:
+        generated = full_text.strip()
+    return generated
 
-
+# === KANDINSKY ===
 def generate_image_with_kandinsky(prompt):
-    """Генерация картинки через Kandinsky 3.1 (Fusion Brain API)"""
     url = "https://api.fusionbrain.ai/api/v1/text2image"
     headers = {
         "X-Key": FB_API_KEY,
-        # "X-Secret": FB_SECRET_KEY,  # часто не требуется — закомментируй, если не используешь
         "Content-Type": "application/json"
     }
     payload = {
-        "model_id": "7582",  # Kandinsky 3.1
+        "model_id": "7582",
         "params": {
             "prompt": prompt + ", russian provincial town, humorous, detailed, no text, no letters",
             "negative_prompt": "blurry, ugly, text, signature, watermark, deformed",
@@ -123,21 +147,16 @@ def generate_image_with_kandinsky(prompt):
         f.write(img_data)
     return img_path
 
-
+# === TELEGRAM ===
 def send_to_telegram(text, image_path=None):
-    """Отправка в Telegram"""
-    # Убираем пробелы в URL!
     base_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
-    
-    # Отправка текста
     data = {
         "chat_id": CHANNEL,
-        "text": text[:4096],  # Telegram limit
+        "text": text[:4096],
         "parse_mode": "HTML"
     }
     requests.post(f"{base_url}/sendMessage", data=data)
 
-    # Отправка картинки (если есть)
     if image_path:
         try:
             with open(image_path, "rb") as img:
@@ -147,15 +166,17 @@ def send_to_telegram(text, image_path=None):
         except Exception as e:
             print(f"⚠️ Не удалось отправить картинку: {e}")
 
-
 # === MAIN ===
 if __name__ == "__main__":
+    print("🔍 Загружаем уже обработанные новости из Gist...")
+    seen_titles = load_seen()
+
     print("🔍 Ищу свежие политические новости...")
     news = fetch_political_news(hours=1)
 
     if not news:
         print("😴 Нет свежих новостей за последний час.")
-        save_seen()
+        save_seen(seen_titles)
         exit(0)
 
     item = news[0]
@@ -166,14 +187,13 @@ if __name__ == "__main__":
         print("🧠 Генерирую пост через LLM...")
         full_output = generate_post_with_llm(item["title"], item["summary"])
 
-        # Извлекаем текст и промпт для картинки
         if "ПРОМПТ ДЛЯ КАРТИНКИ:" in full_output:
             text_part, img_prompt_raw = full_output.split("ПРОМПТ ДЛЯ КАРТИНКИ:", 1)
             text = text_part.strip()
             img_prompt = img_prompt_raw.strip().strip("[]\"' ")
         else:
             text = full_output
-            img_prompt = "A typical Russian provincial town, a man on a bench reading news, beer bottle nearby, humorous cartoon style"
+            img_prompt = "A Russian man on a bench in a small town, reading news, beer bottle nearby, humorous style"
 
         print("🎨 Генерирую картинку...")
         img_path = generate_image_with_kandinsky(img_prompt)
@@ -184,8 +204,7 @@ if __name__ == "__main__":
         print("✅ Успешно опубликовано!")
     except Exception as e:
         print(f"❌ Ошибка: {e}")
-        # Отправляем текст даже при ошибке генерации картинки
         fallback_text = f"[⚠️ Ошибка в генерации]\n\n{full_output[:4000] if full_output else item['title']}"
         send_to_telegram(fallback_text)
 
-    save_seen()
+    save_seen(seen_titles)
