@@ -29,15 +29,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
           FUSIONBRAIN_API_KEY: ${{ secrets.FUSIONBRAIN_API_KEY }}
           TELEGRAM_CHANNEL: "@notreviews"  # ← замени на свой!
         run: python main.py
-
-      - name: Save seen.json (to avoid duplicates)
-        run: |
-          git config --global user.name "Vitok Bot"
-          git config --global user.email "vitok@bot.com"
-          git add seen.json
-          git commit -m "Update seen titles" || echo "No changes"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/HRMetriX/zavod.git
-          git push
