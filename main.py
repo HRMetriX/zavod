@@ -5,6 +5,7 @@ import random
 import feedparser
 from datetime import datetime, timedelta
 import requests
+from openai import OpenAI
 
 # === CONFIG ===
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
@@ -83,6 +84,7 @@ def fetch_political_news(hours=1):
 
 # === LLM ===
 def generate_post_with_llm(title, summary):
+    """Генерация поста через Hugging Face Inference Providers (Qwen2.5 via Together)"""
     PROMPT_TEMPLATE = """
 Ты — Витёк из гаража: мужик 50+, бывший заводчанин, с лёгкой контузией после китайского крана. Ты пересказываешь политические новости так, будто услышал их от Сан Саныча у ларька или тёти Любы на лавке. Не называй политиков официально — используй прозвища: Путин = Батенька, Лавров = Слоняра, Си = Китаец с рынка и т.д. Переводи санкции, Совбез, Минобороны на язык быта: "санкции = пыль с Запада", "Совбез = диспетчерская по базару". Начинай пост с живой сцены (лавка, огород, пивной ларёк...), добавляй детали вроде "водка подорожала", "у меня огурцы солить", "Петрович, драть его в сраку!". Заканчивай иронично: "А мне-то чё? У меня гараж есть". Подпись: "За Родину-мать не стыдно рвать!" 🇷🇺.
 
@@ -93,29 +95,24 @@ def generate_post_with_llm(title, summary):
 """
     prompt = PROMPT_TEMPLATE.format(title=title, summary=summary)
 
-    API_URL = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct"
-    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 600,
-            "temperature": 0.9,
-            "do_sample": True,
-            "return_full_text": False
-        }
-    }
+    # Инициализация клиента через HF Router (OpenAI-совместимый)
+    client = OpenAI(
+        base_url="https://router.huggingface.co/v1",
+        api_key=os.environ["HF_TOKEN"]
+    )
 
-    response = requests.post(API_URL, headers=headers, json=payload, timeout=60)
-    if response.status_code != 200:
-        raise Exception(f"HF error: {response.text}")
-    
-    full_text = response.json()[0]["generated_text"]
-    # Qwen может вернуть промпт + ответ → оставляем только новое
-    if prompt.strip() in full_text:
-        generated = full_text.split(prompt.strip(), 1)[-1].strip()
-    else:
-        generated = full_text.strip()
-    return generated
+    # Вызов модели через Together AI
+    completion = client.chat.completions.create(
+        model="Qwen/Qwen2.5-7B-Instruct:together",
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.9,
+        max_tokens=600,
+        top_p=0.95
+    )
+
+    return completion.choices[0].message.content.strip()
 
 # === KANDINSKY ===
 def generate_image_with_kandinsky(prompt):
