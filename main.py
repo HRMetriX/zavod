@@ -119,7 +119,7 @@ def generate_post_with_llm(title, summary):
         print(f"❌ Ошибка в InferenceClient: {e}")
         # Fallback на прямое API
         print("🔄 Пробую прямое API...")
-        return generate_post_with_llm_fixed(title, summary)
+        return generate_post_with_llm(title, summary)
 
 
 # === KANDINSKY ===
