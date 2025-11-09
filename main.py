@@ -137,8 +137,12 @@ def generate_post_with_llm(title, summary):
 
     print("📝 Отправляю промпт в Qwen2.5-7B...")
     
-    # Используем тот же клиент, что РАБОТАЛ в тестах
-    client = InferenceClient(token=os.environ["HF_TOKEN"])
+    # client = InferenceClient(token=os.environ["HF_TOKEN"])  # <-- Так было
+    hf_token = os.environ.get("HF_TOKEN")
+    if not hf_token:
+        print("❌ HF_TOKEN не найден!")
+        return fallback_text
+    client = InferenceClient(token=hf_token)
     
     try:
         # Используем chat_completion с явным указанием модели
