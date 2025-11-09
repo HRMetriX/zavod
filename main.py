@@ -138,14 +138,12 @@ def generate_image_with_kandinsky(prompt):
     # URL и заголовки
     base_url = "https://api-key.fusionbrain.ai/"
     api_key = os.environ.get("FUSIONBRAIN_API_KEY")
-    secret_key = os.environ.get("FUSIONBRAIN_SECRET_KEY")  # <-- ВАЖНО
-    print(f"DEBUG: FUSIONBRAIN_API_KEY exists: {bool(api_key)}")
-    print(f"DEBUG: FUSIONBRAIN_SECRET_KEY exists: {bool(secret_key)}")
+    secret_key = os.environ.get("FUSIONBRAIN_SECRET_KEY")
 
     if not api_key:
         print("❌ FUSIONBRAIN_API_KEY не найден в переменных окружения")
         return None
-    if not secret_key:  # <-- ВАЖНО: проверка на SECRET_KEY
+    if not secret_key:
         print("❌ FUSIONBRAIN_SECRET_KEY не найден в переменных окружения")
         return None
 
@@ -171,7 +169,7 @@ def generate_image_with_kandinsky(prompt):
         print(f"❌ Ошибка при получении pipeline_id: {e}")
         return None
 
-    # 2. Подготовим параметры для генерации
+    # 2. Подготовим параметры для генерации (правильная структура!)
     params = {
         "type": "GENERATE",
         "numImages": 1,
@@ -179,9 +177,9 @@ def generate_image_with_kandinsky(prompt):
         "height": 1024,
         "negativePromptDecoder": "blurry, ugly, text, signature, watermark, deformed",  # <-- ВНЕ generateParams
         "generateParams": {
-        "query": prompt + ", russian provincial town, humorous, detailed, no text, no letters",
+            "query": prompt + ", russian provincial town, humorous, detailed, no text, no letters",
+        }
     }
-}
 
     # 3. Отправляем задачу на генерацию (multipart/form-data)
     data = {
@@ -191,7 +189,8 @@ def generate_image_with_kandinsky(prompt):
 
     try:
         resp = requests.post(base_url + 'key/api/v1/pipeline/run', headers=headers, files=data)
-        if resp.status_code != 200:
+        # ИСПРАВЛЕНО: 201 — это успех, а не ошибка
+        if resp.status_code != 201:
             print(f"❌ Ошибка при отправке задачи: {resp.status_code}, {resp.text}")
             return None
         result = resp.json()
@@ -205,8 +204,8 @@ def generate_image_with_kandinsky(prompt):
         return None
 
     # 4. Ждём завершения генерации
-    attempts = 10
-    delay = 10  # секунд
+    attempts = 20  # <-- Увеличено
+    delay = 15  # <-- Увеличено (15 секунд)
     print(f"⏳ Ожидание генерации... (до {attempts * delay} секунд)")
     while attempts > 0:
         try:
