@@ -93,6 +93,7 @@ def generate_post_with_llm(title, summary):
 
 ВАЖНО: Отвечай ТОЛЬКО на РУССКОМ языке, без использования других языков, особенно китайского.
 ВАЖНО: Текст должен быть удобен для чтения, разбит на абзацы, диалоги оформлены удобно.
+КРИТИЧНО: Старайся уместить текст в 1000 символов
 
 Вот новость: "{title}. {summary}"
 
@@ -116,8 +117,8 @@ def generate_post_with_llm(title, summary):
         response = client.chat_completion(
             model="Qwen/Qwen3-235B-A22B-Instruct-2507", #Qwen2.5-7B-Instruct (точно работает), Qwen3-235B-A22B-Instruct-2507-FP8 (не работает)
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=600,
-            temperature=0.9
+            max_tokens=1000,
+            temperature=0.7
         )
         result = response.choices[0].message.content.strip()
         print("✅ LLM ответил успешно")
