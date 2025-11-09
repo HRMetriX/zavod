@@ -100,39 +100,26 @@ def generate_post_with_llm(title, summary):
 
     print("📝 Отправляю промпт в Qwen2.5-7B через прямое API...")
     
-    url = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct"
-    headers = {"Authorization": f"Bearer {os.environ['HF_TOKEN']}"}
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 600,
-            "temperature": 0.9,
-            "return_full_text": False
-        }
-    }
+    # Используем тот же клиент, что работал в тестах
+    client = InferenceClient(token=os.environ["HF_TOKEN"])
     
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=120)
-        
-        if response.status_code == 200:
-            result = response.json()
-            generated_text = result[0]['generated_text']
-            print("✅ LLM ответил успешно")
-            return generated_text
-        elif response.status_code == 503:
-            # Модель загружается
-            error_info = response.json()
-            estimated_time = error_info.get('estimated_time', 30)
-            print(f"⏳ Модель загружается, ждём {estimated_time} секунд...")
-            time.sleep(estimated_time + 5)
-            # Пробуем снова
-            return generate_post_with_llm_fixed(title, summary)
-        else:
-            raise Exception(f"API ошибка: {response.status_code} - {response.text}")
-            
+        # Используем chat_completion с явным указанием модели
+        response = client.chat_completion(
+            model="Qwen/Qwen2.5-7B-Instruct",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=600,
+            temperature=0.9
+        )
+        result = response.choices[0].message.content.strip()
+        print("✅ LLM ответил успешно")
+        return result
+
     except Exception as e:
-        print(f"❌ Ошибка в API запросе: {e}")
-        raise
+        print(f"❌ Ошибка в InferenceClient: {e}")
+        # Fallback на прямое API
+        print("🔄 Пробую прямое API...")
+        return generate_post_with_llm_fixed(title, summary)
 
 
 # === KANDINSKY ===
