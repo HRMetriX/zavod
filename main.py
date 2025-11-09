@@ -98,31 +98,41 @@ def generate_post_with_llm(title, summary):
 """
     prompt = PROMPT_TEMPLATE.format(title=title, summary=summary)
 
-    print("📝 Отправляю промпт в Qwen2.5-7B через InferenceClient...")
+    print("📝 Отправляю промпт в Qwen2.5-7B через прямое API...")
     
-    # ИСПРАВЛЕНИЕ: Указываем конкретный provider URL вместо авто-роутинга
-    client = InferenceClient(
-        base_url="https://api-inference.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct",
-        token=os.environ["HF_TOKEN"]
-    )
+    url = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct"
+    headers = {"Authorization": f"Bearer {os.environ['HF_TOKEN']}"}
+    payload = {
+        "inputs": prompt,
+        "parameters": {
+            "max_new_tokens": 600,
+            "temperature": 0.9,
+            "return_full_text": False
+        }
+    }
     
     try:
-        # Используем text_generation вместо chat_completion для совместимости
-        response = client.text_generation(
-            prompt=prompt,
-            max_new_tokens=600,
-            temperature=0.9,
-            return_full_text=False
-        )
-        print("✅ LLM ответил успешно")
-        return response
-
+        response = requests.post(url, headers=headers, json=payload, timeout=120)
+        
+        if response.status_code == 200:
+            result = response.json()
+            generated_text = result[0]['generated_text']
+            print("✅ LLM ответил успешно")
+            return generated_text
+        elif response.status_code == 503:
+            # Модель загружается
+            error_info = response.json()
+            estimated_time = error_info.get('estimated_time', 30)
+            print(f"⏳ Модель загружается, ждём {estimated_time} секунд...")
+            time.sleep(estimated_time + 5)
+            # Пробуем снова
+            return generate_post_with_llm_fixed(title, summary)
+        else:
+            raise Exception(f"API ошибка: {response.status_code} - {response.text}")
+            
     except Exception as e:
-        print(f"❌ Ошибка в InferenceClient: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"❌ Ошибка в API запросе: {e}")
         raise
-
 
 
 # === KANDINSKY ===
