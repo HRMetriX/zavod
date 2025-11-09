@@ -112,7 +112,7 @@ def generate_post_with_llm(title, summary):
 
     try:
         response = client.chat_completion(
-            model="Qwen/Qwen2.5-7B-Instruct",
+            model="Qwen/Qwen3-235B-A22B-Instruct-2507-FP8", #Qwen2.5-7B-Instruct (точно работает)
             messages=[{"role": "user", "content": prompt}],
             max_tokens=600,
             temperature=0.9
