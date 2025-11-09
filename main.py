@@ -10,6 +10,43 @@ import traceback
 from huggingface_hub import InferenceClient
 
 
+# === debug hf token ===
+
+def debug_hf_token():
+    """Проверка токена и подключения"""
+    hf_token = os.environ.get("HF_TOKEN")
+    if not hf_token:
+        print("❌ HF_TOKEN не найден в переменных окружения")
+        return
+
+    print(f"✅ HF_TOKEN найден (длина: {len(hf_token)})")
+    if hf_token.startswith("hf_"):
+        print("✅ Формат токена корректный")
+    else:
+        print("❌ Формат токена НЕКОРРЕКТНЫЙ")
+
+    # Попробуем создать клиент
+    client = InferenceClient(token=hf_token)
+
+    # Проверим доступ к модели
+    try:
+        # Простой вызов для проверки
+        response = client.chat_completion(
+            model="Qwen/Qwen2.5-7B-Instruct",
+            messages=[{"role": "user", "content": "Привет. Это тест."}],
+            max_tokens=10,
+            temperature=0.1
+        )
+        print("✅ Подключение к модели работает!")
+        print(f"Ответ: {response.choices[0].message.content[:50]}...")
+    except Exception as e:
+        print(f"❌ Ошибка при подключении: {e}")
+        import traceback
+        traceback.print_exc()
+
+# Вызови эту функцию в начале main.py перед основной логикой
+debug_hf_token()
+
 # === CONFIG ===
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 HF_TOKEN = os.environ["HF_TOKEN"]
