@@ -98,90 +98,26 @@ def generate_post_with_llm(title, summary):
 """
     prompt = PROMPT_TEMPLATE.format(title=title, summary=summary)
 
-    print("📝 Отправляю промпт в LLM:")
-    print("-" * 50)
-    print(prompt[:500] + "..." if len(prompt) > 500 else prompt)
-    print("-" * 50)
-
+    print("📝 Отправляю промпт в Qwen2.5-7B через InferenceClient...")
+    
+    client = InferenceClient(token=os.environ["HF_TOKEN"])
+    
     try:
-        HF_TOKEN = os.environ["HF_TOKEN"]
-        MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
+        response = client.chat_completion(
+            model="Qwen/Qwen2.5-7B-Instruct",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=600,
+            temperature=0.9
+        )
+        result = response.choices[0].message.content.strip()
+        print("✅ LLM ответил успешно")
+        return result
 
-        # НОВЫЙ URL для HF Inference API через роутер
-        # Формат: https://router.huggingface.co/hf-inference/inference/models/{MODEL_ID}/conversation
-        # Однако, этот формат может быть для чатов. Для текстовой генерации часто используется:
-        # https://router.huggingface.co/hf-inference/inference/models/{MODEL_ID}/generate
-        # Или, как указано в ошибке, https://router.huggingface.co/v1 (для OpenAI-совместимого API)
-        # Но для прямого вызова через requests, возможно, нужно использовать другой формат.
-
-        # Попробуем формат, похожий на тот, что был, но с новым хостом
-        # API_URL = f"https://router.huggingface.co/hf-inference/inference/models/{MODEL_ID}/generate"
-        # Или, если роутер поддерживает тот же формат, что и старый API:
-        API_URL = f"https://router.huggingface.co/hf-inference/models/{MODEL_ID}/generate" # Попробуем этот
-
-        headers = {
-            "Authorization": f"Bearer {HF_TOKEN}",
-            "Content-Type": "application/json"
-        }
-
-        # Подготовка payload для текстовой генерации через новый API
-        # Структура может отличаться для нового endpoint
-        payload = {
-            "inputs": prompt,
-            "parameters": {
-                "temperature": 0.9,
-                "max_new_tokens": 600,
-            },
-            "options": {
-                "wait_for_model": True
-            }
-        }
-
-        print(f"Отправляю POST запрос на {API_URL}") # Для отладки
-
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=60)
-        # Не вызываем response.raise_for_status() сразу, чтобы посмотреть тело ответа в случае ошибки
-        if response.status_code != 200:
-            print(f"❌ ОТВЕТ ОТ API (не 200): Статус {response.status_code}, Тело: {response.text}")
-            response.raise_for_status() # Вызовет исключение с деталями, если статус != 200
-
-        result_json = response.json()
-        print(f"Ответ от API (200): {result_json}") # Для отладки
-
-        # Обработка ответа для нового API
-        # Формат может отличаться, возможно, результат будет в 'generated_text' или 'outputs'
-        # Попробуем стандартный ключ
-        generated_text = result_json.get("generated_text", "")
-        if not generated_text and "outputs" in result_json:
-             # Некоторые форматы могут использовать 'outputs'
-             outputs = result_json["outputs"]
-             if isinstance(outputs, list) and len(outputs) > 0:
-                 generated_text = outputs[0]
-             elif isinstance(outputs, str):
-                 generated_text = outputs
-
-        # Убираем исходный промпт из результата, если он возвращается
-        if generated_text.startswith(prompt):
-            generated_text = generated_text[len(prompt):].strip()
-
-        print("✅ LLM вернул ответ:")
-        print("-" * 50)
-        print(generated_text[:500] + "..." if len(generated_text) > 500 else generated_text)
-        print("-" * 50)
-        return generated_text
-
-    except requests.exceptions.HTTPError as e:
-        print(f"❌ ОШИБКА HTTP при вызове LLM: {e}")
-        print(f"Статус код: {e.response.status_code}")
-        print(f"Тело ответа: {e.response.text}")
-        raise
     except Exception as e:
-        print("❌ ОШИБКА при вызове LLM:")
-        print(f"Тип: {type(e).__name__}")
-        print(f"Сообщение: {str(e)}")
-        print("Подробный стек:")
+        print(f"❌ Ошибка в InferenceClient: {e}")
+        import traceback
         traceback.print_exc()
-        raise  # пробрасываем, чтобы workflow упал — это важно для отладки
+        raise
 
 
 # === KANDINSKY ===
