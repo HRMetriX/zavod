@@ -9,6 +9,7 @@ from openai import OpenAI
 import traceback
 from huggingface_hub import InferenceClient
 
+
 # === CONFIG ===
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 HF_TOKEN = os.environ["HF_TOKEN"]
@@ -106,59 +107,58 @@ def generate_post_with_llm(title, summary):
         HF_TOKEN = os.environ["HF_TOKEN"]
         MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
 
-        # URL для чат-моделей через HF Inference API
-        API_URL = f"https://api-inference.huggingface.co/models/{MODEL_ID}"
+        # НОВЫЙ URL для HF Inference API через роутер
+        # Формат: https://router.huggingface.co/hf-inference/inference/models/{MODEL_ID}/conversation
+        # Однако, этот формат может быть для чатов. Для текстовой генерации часто используется:
+        # https://router.huggingface.co/hf-inference/inference/models/{MODEL_ID}/generate
+        # Или, как указано в ошибке, https://router.huggingface.co/v1 (для OpenAI-совместимого API)
+        # Но для прямого вызова через requests, возможно, нужно использовать другой формат.
+
+        # Попробуем формат, похожий на тот, что был, но с новым хостом
+        # API_URL = f"https://router.huggingface.co/hf-inference/inference/models/{MODEL_ID}/generate"
+        # Или, если роутер поддерживает тот же формат, что и старый API:
+        API_URL = f"https://router.huggingface.co/hf-inference/models/{MODEL_ID}/generate" # Попробуем этот
 
         headers = {
             "Authorization": f"Bearer {HF_TOKEN}",
             "Content-Type": "application/json"
         }
 
-        # Подготовка payload для чат-модели
+        # Подготовка payload для текстовой генерации через новый API
+        # Структура может отличаться для нового endpoint
         payload = {
-            "inputs": prompt, # Некоторые чат-модели могут ожидать inputs, а не messages
+            "inputs": prompt,
             "parameters": {
                 "temperature": 0.9,
-                "max_new_tokens": 600, # Используем max_new_tokens вместо max_tokens
-                # "return_full_text": False, # Обычно по умолчанию False для генерации
+                "max_new_tokens": 600,
             },
             "options": {
-                "wait_for_model": True # Ждать загрузки модели, если она выгружена
+                "wait_for_model": True
             }
         }
 
-        # Альтернативный payload для API, поддерживающего формат messages (если первый не сработает)
-        # payload = {
-        #     "messages": [{"role": "user", "content": prompt}],
-        #     "parameters": {
-        #         "temperature": 0.9,
-        #         "max_new_tokens": 600,
-        #     },
-        #     "options": {
-        #         "wait_for_model": True
-        #     }
-        # }
+        print(f"Отправляю POST запрос на {API_URL}") # Для отладки
 
         response = requests.post(API_URL, headers=headers, json=payload, timeout=60)
-        response.raise_for_status() # Вызывает исключение, если статус != 200
+        # Не вызываем response.raise_for_status() сразу, чтобы посмотреть тело ответа в случае ошибки
+        if response.status_code != 200:
+            print(f"❌ ОТВЕТ ОТ API (не 200): Статус {response.status_code}, Тело: {response.text}")
+            response.raise_for_status() # Вызовет исключение с деталями, если статус != 200
 
         result_json = response.json()
-        print(f"Ответ от API: {result_json}") # Для отладки
+        print(f"Ответ от API (200): {result_json}") # Для отладки
 
-        # Обработка ответа
-        # Формат ответа может отличаться в зависимости от модели и API
-        # Обычно это список словарей или один словарь
-        if isinstance(result_json, list) and len(result_json) > 0:
-            generated_text = result_json[0].get("generated_text", "")
-        elif isinstance(result_json, dict):
-            # Попробуем ключи, которые могут использоваться
-            generated_text = result_json.get("generated_text", "")
-            # Если ключ 'generated_text' не найден, возможно, используется формат для chat
-            # В этом случае результат может быть в 'choices' или напрямую в 'message'
-            if not generated_text and 'choices' in result_json:
-                generated_text = result_json['choices'][0]['message']['content']
-        else:
-            raise ValueError(f"Неожиданный формат ответа от API: {result_json}")
+        # Обработка ответа для нового API
+        # Формат может отличаться, возможно, результат будет в 'generated_text' или 'outputs'
+        # Попробуем стандартный ключ
+        generated_text = result_json.get("generated_text", "")
+        if not generated_text and "outputs" in result_json:
+             # Некоторые форматы могут использовать 'outputs'
+             outputs = result_json["outputs"]
+             if isinstance(outputs, list) and len(outputs) > 0:
+                 generated_text = outputs[0]
+             elif isinstance(outputs, str):
+                 generated_text = outputs
 
         # Убираем исходный промпт из результата, если он возвращается
         if generated_text.startswith(prompt):
