@@ -226,9 +226,18 @@ def send_to_telegram(text, image_path=None):
                 print(f"DEBUG: SendPhoto status: {resp_img.status_code}, response: {resp_img.text}")
         except Exception as e:
             print(f"⚠️ Не удалось отправить картинку: {e}")
+
+def check_channel_access():
+    """Проверка доступа к каналу через Telegram API"""
+    base_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
+    print(f"DEBUG: Проверяем канал {CHANNEL}")
+    resp = requests.post(f"{base_url}/getChat", data={"chat_id": CHANNEL})
+    print(f"DEBUG: getChat status: {resp.status_code}, response: {resp.text}")
+    
             
 # === MAIN ===
 if __name__ == "__main__":
+    check_channel_access()  # <-- Добавь эту строку
     print("🔍 Загружаем уже обработанные новости из Gist...")
     seen_titles = load_seen()
     print("DEBUG: Загруженные seen_titles:", seen_titles)  # <-- Добавь эту строку
