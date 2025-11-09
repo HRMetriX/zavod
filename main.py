@@ -100,27 +100,29 @@ def generate_post_with_llm(title, summary):
 
     print("📝 Отправляю промпт в Qwen2.5-7B через InferenceClient...")
     
-    # Инициализация клиента БЕЗ токена
-    client = InferenceClient()
+    # ИСПРАВЛЕНИЕ: Указываем конкретный provider URL вместо авто-роутинга
+    client = InferenceClient(
+        base_url="https://api-inference.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct",
+        token=os.environ["HF_TOKEN"]
+    )
     
     try:
-        response = client.chat_completion(
-            model="Qwen/Qwen2.5-7B-Instruct",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=600,
+        # Используем text_generation вместо chat_completion для совместимости
+        response = client.text_generation(
+            prompt=prompt,
+            max_new_tokens=600,
             temperature=0.9,
-            # Передача токена в методе
-            api_key=os.environ["HF_TOKEN"]
+            return_full_text=False
         )
-        result = response.choices[0].message.content.strip()
         print("✅ LLM ответил успешно")
-        return result
+        return response
 
     except Exception as e:
         print(f"❌ Ошибка в InferenceClient: {e}")
         import traceback
         traceback.print_exc()
         raise
+
 
 
 # === KANDINSKY ===
