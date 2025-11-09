@@ -129,6 +129,7 @@ def generate_post_with_llm(title, summary):
         # Возвращаем ТОЛЬКО текст, БЕЗ промпта для картинки
         fallback_text = f"Батенька опять в новостях: {title}. А мне-то чё? У меня гараж есть. За Родину-мать не стыдно рвать! 🇷🇺"
         return fallback_text
+        
 # === KANDINSKY ===
 def generate_image_with_kandinsky(prompt):
     """
@@ -137,15 +138,15 @@ def generate_image_with_kandinsky(prompt):
     # URL и заголовки
     base_url = "https://api-key.fusionbrain.ai/"
     api_key = os.environ.get("FUSIONBRAIN_API_KEY")
-    secret_key = os.environ.get("FUSIONBRAIN_SECRET_KEY", "")  # если не задан, пустая строка
 
     if not api_key:
         print("❌ FUSIONBRAIN_API_KEY не найден в переменных окружения")
         return None
 
+    # Убираем X-Secret, если его нет
     headers = {
         'X-Key': f'Key {api_key}',
-        'X-Secret': f'Secret {secret_key}',
+        # 'X-Secret': f'Secret {secret_key}',  # Закомментировано
     }
 
     # 1. Получаем список доступных моделей (pipeline_id)
