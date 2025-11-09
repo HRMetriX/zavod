@@ -138,15 +138,18 @@ def generate_image_with_kandinsky(prompt):
     # URL и заголовки
     base_url = "https://api-key.fusionbrain.ai/"
     api_key = os.environ.get("FUSIONBRAIN_API_KEY")
+    secret_key = os.environ.get("FUSIONBRAIN_SECRET_KEY")
 
     if not api_key:
         print("❌ FUSIONBRAIN_API_KEY не найден в переменных окружения")
         return None
+    if not secret_key:
+        print("❌ FUSIONBRAIN_SECRET_KEY не найден в переменных окружения")
+        return None
 
-    # Убираем X-Secret, если его нет
     headers = {
         'X-Key': f'Key {api_key}',
-        # 'X-Secret': f'Secret {secret_key}',  # Закомментировано
+        'X-Secret': f'Secret {secret_key}',
     }
 
     # 1. Получаем список доступных моделей (pipeline_id)
