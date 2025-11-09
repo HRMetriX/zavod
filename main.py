@@ -189,7 +189,7 @@ def generate_image_with_kandinsky(prompt):
         "height": 1024,
         "negativePromptDecoder": "blurry, ugly, text, signature, watermark, deformed",  # <-- ВНЕ generateParams
         "generateParams": {
-            "query": prompt + ", photorealistic, photojournalism style, natural lighting, high detail, candid street photography, shallow depth of field, muted warm tones, subtle film grain, 35mm equivalent lens perspective, documentary aesthetic, sharp focus on faces, natural human expressions, anatomically correct facial features, no distorted faces, no extra eyes, no fused limbs, no text, no logos, no letters, no visible signage",
+            "query": prompt + ", photorealistic, photojournalism style, natural lighting, high detail, candid street photography, shallow depth of field, muted warm tones, subtle film grain, 35mm lens look, documentary realism, clear facial details, lifelike human expressions, everyday realism, no text, no logos, no letters, no visible signage",
         }
     }
 
