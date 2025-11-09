@@ -249,26 +249,31 @@ def generate_image_with_kandinsky(prompt):
 # === TELEGRAM ===
 def send_to_telegram(text, image_path=None):
     base_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
-    print(f"DEBUG: send_to_telegram вызвана, image_path = {image_path}")  # <-- Добавь
-    data = {
-        "chat_id": CHANNEL,
-        "text": text[:4096],
-        "parse_mode": "HTML"
-    }
-    resp = requests.post(f"{base_url}/sendMessage", data=data)
+    print(f"DEBUG: send_to_telegram вызвана, image_path = {image_path}")  # <-- Отладка
 
-    if image_path and resp.status_code == 200:
-        print(f"DEBUG: Отправляем фото: {image_path}")  # <-- Добавь
+    if image_path:
+        # Отправляем фото с подписью (caption = текст)
         try:
             with open(image_path, "rb") as img:
                 files = {"photo": img}
-                data = {"chat_id": CHANNEL}
+                data = {
+                    "chat_id": CHANNEL,
+                    "caption": text[:1024],  # <-- Текст как подпись к фото (макс. 1024 символа)
+                    "parse_mode": "HTML"
+                }
                 resp_img = requests.post(f"{base_url}/sendPhoto", files=files, data=data)
-                print(f"DEBUG: sendPhoto status = {resp_img.status_code}")  # <-- Добавь
+                print(f"DEBUG: sendPhoto status = {resp_img.status_code}")  # <-- Отладка
         except Exception as e:
             print(f"⚠️ Не удалось отправить картинку: {e}")
     else:
-        print(f"DEBUG: sendPhoto не вызывается (image_path = {image_path}, resp.status = {resp.status_code})")
+        # Если картинки нет — отправляем только текст
+        data = {
+            "chat_id": CHANNEL,
+            "text": text[:4096],
+            "parse_mode": "HTML"
+        }
+        resp = requests.post(f"{base_url}/sendMessage", data=data)
+        print(f"DEBUG: sendMessage status = {resp.status_code}")  # <-- Отладка
 
 # === MAIN ===
 if __name__ == "__main__":
