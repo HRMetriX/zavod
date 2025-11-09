@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import requests
 from openai import OpenAI
 import traceback
+from huggingface_hub import InferenceClient
 
 # === CONFIG ===
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
@@ -96,26 +97,41 @@ def generate_post_with_llm(title, summary):
 """
     prompt = PROMPT_TEMPLATE.format(title=title, summary=summary)
 
+    prompt = PROMPT_TEMPLATE.format(title=title, summary=summary)
+
     print("📝 Отправляю промпт в LLM:")
     print("-" * 50)
     print(prompt[:500] + "..." if len(prompt) > 500 else prompt)
     print("-" * 50)
 
     try:
-        client = OpenAI(
-            base_url="https://router.huggingface.co/v1",
-            api_key=os.environ["HF_TOKEN"]
+        # Используем InferenceClient из huggingface_hub
+        HF_TOKEN = os.environ["HF_TOKEN"]
+        # Укажите конкретную модель
+        MODEL_ID = "Qwen/Qwen2.5-7B-Instruct" # Или другая подходящая модель
+
+        client = InferenceClient(
+            model=MODEL_ID,
+            token=HF_TOKEN
         )
 
+        # Для чат-моделей используем метод chat.completions
+        # messages - это список словарей с ролями "system", "user", "assistant"
+        # Вместо system промпта можно использовать "user" сообщение с полным промптом
+        messages = [{"role": "user", "content": prompt}]
+
+        # Вызов API
         completion = client.chat.completions.create(
-            model="Qwen/Qwen2.5-7B-Instruct:together",
-            messages=[{"role": "user", "content": prompt}],
+            messages=messages,
+            model=MODEL_ID, # Не всегда обязательно, если модель указана в клиенте
             temperature=0.9,
             max_tokens=600,
             timeout=60
         )
 
+        # Извлечение результата
         result = completion.choices[0].message.content.strip()
+
         print("✅ LLM вернул ответ:")
         print("-" * 50)
         print(result[:500] + "..." if len(result) > 500 else result)
