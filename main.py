@@ -107,26 +107,22 @@ def generate_post_with_llm(title, summary):
     try:
         # Используем InferenceClient из huggingface_hub
         HF_TOKEN = os.environ["HF_TOKEN"]
-        # Укажите конкретную модель
-        MODEL_ID = "Qwen/Qwen2.5-7B-Instruct" # Или другая подходящая модель
+        MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
 
         client = InferenceClient(
             model=MODEL_ID,
             token=HF_TOKEN
         )
 
-        # Для чат-моделей используем метод chat.completions
-        # messages - это список словарей с ролями "system", "user", "assistant"
-        # Вместо system промпта можно использовать "user" сообщение с полным промптом
         messages = [{"role": "user", "content": prompt}]
 
-        # Вызов API
+        # Вызов API - УБРАН параметр timeout
         completion = client.chat.completions.create(
             messages=messages,
-            model=MODEL_ID, # Не всегда обязательно, если модель указана в клиенте
+            model=MODEL_ID,
             temperature=0.9,
             max_tokens=600,
-            timeout=60
+            # timeout=60  # <-- Этот параметр убран
         )
 
         # Извлечение результата
@@ -145,6 +141,7 @@ def generate_post_with_llm(title, summary):
         print("Подробный стек:")
         traceback.print_exc()
         raise  # пробрасываем, чтобы workflow упал — это важно для отладки
+
 
 # === KANDINSKY ===
 def generate_image_with_kandinsky(prompt):
