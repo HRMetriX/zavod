@@ -263,7 +263,7 @@ if __name__ == "__main__":
         fallback_text = f"[⚠️ Ошибка в генерации]\n\n{full_output[:4000] if full_output else item['title']}"
         send_to_telegram(fallback_text)
 
-    print(f"DEBUG: Первые 100 символов текста: {text[:100]}...")  # <-- И эту
+    print("DEBUG: Перед сохранением seen_titles (в конце):", seen_titles)
     save_seen(seen_titles)
 
 print("🏁 Скрипт завершён. Всего обработано новостей:", len(news))
