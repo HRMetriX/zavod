@@ -177,11 +177,11 @@ def generate_image_with_kandinsky(prompt):
         "numImages": 1,
         "width": 1024,
         "height": 1024,
+        "negativePromptDecoder": "blurry, ugly, text, signature, watermark, deformed",  # <-- ВНЕ generateParams
         "generateParams": {
-            "query": prompt + ", russian provincial town, humorous, detailed, no text, no letters",
-            "negativePromptDecoder": "blurry, ugly, text, signature, watermark, deformed"
-        }
+        "query": prompt + ", russian provincial town, humorous, detailed, no text, no letters",
     }
+}
 
     # 3. Отправляем задачу на генерацию (multipart/form-data)
     data = {
