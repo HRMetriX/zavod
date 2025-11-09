@@ -98,13 +98,14 @@ def generate_post_with_llm(title, summary):
 """
     prompt = PROMPT_TEMPLATE.format(title=title, summary=summary)
 
-    print("📝 Отправляю промпт в Qwen2.5-7B через прямое API...")
+    print("📝 Отправляю промпт в Qwen2.5-7B...")
     
-    # Используем тот же клиент, что работал в тестах
+    # Используем тот же клиент, что РАБОТАЛ в тестах
     client = InferenceClient(token=os.environ["HF_TOKEN"])
     
     try:
         # Используем chat_completion с явным указанием модели
+        # Тот же вызов, что успешно работал в тестах!
         response = client.chat_completion(
             model="Qwen/Qwen2.5-7B-Instruct",
             messages=[{"role": "user", "content": prompt}],
@@ -116,10 +117,10 @@ def generate_post_with_llm(title, summary):
         return result
 
     except Exception as e:
-        print(f"❌ Ошибка в InferenceClient: {e}")
-        # Fallback на прямое API
-        print("🔄 Пробую прямое API...")
-        return generate_post_with_llm(title, summary)
+        print(f"❌ Ошибка в LLM: {e}")
+        # Fallback - возвращаем простой текст
+        fallback_text = f"Батенька опять в новостях: {title}. А мне-то чё? У меня гараж есть. За Родину-мать не стыдно рвать! 🇷🇺\n\nПРОМПТ ДЛЯ КАРТИНКИ: Русский мужик сидит на лавке у гаража, читает газету, рядом банка пива"
+        return fallback_text
 
 
 # === KANDINSKY ===
