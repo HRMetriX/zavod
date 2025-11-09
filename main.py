@@ -217,19 +217,23 @@ def generate_image_with_kandinsky(prompt):
 
             if status_data['status'] == 'DONE':
                 print("✅ Генерация завершена!")
+                print(f"DEBUG: status_data = {status_data}")  # <-- Добавь
                 image_url = status_data['result']['files'][0]
+                print(f"DEBUG: image_url = {image_url}")  # <-- Добавь
                 img_data = requests.get(image_url).content
                 img_path = "/tmp/vitok_post.jpg"
                 with open(img_path, "wb") as f:
                     f.write(img_data)
                 print(f"✅ Изображение сохранено: {img_path}")
+                print(f"DEBUG: Файл существует: {os.path.exists(img_path)}")  # <-- Добавь
                 return img_path
             elif status_data['status'] == 'FAILED':
                 print(f"❌ Генерация изображения не удалась: {status_data.get('errorDescription', 'Unknown error')}")
+                print(f"DEBUG: status_data = {status_data}")  # <-- Добавь
                 return None
             else:
                 print(f"⏳ Статус: {status_data['status']}, ожидание...")
-
+                
         except Exception as e:
             print(f"❌ Ошибка при проверке статуса: {e}")
             return None
@@ -243,6 +247,7 @@ def generate_image_with_kandinsky(prompt):
 # === TELEGRAM ===
 def send_to_telegram(text, image_path=None):
     base_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
+    print(f"DEBUG: send_to_telegram вызвана, image_path = {image_path}")  # <-- Добавь
     data = {
         "chat_id": CHANNEL,
         "text": text[:4096],
@@ -251,13 +256,17 @@ def send_to_telegram(text, image_path=None):
     resp = requests.post(f"{base_url}/sendMessage", data=data)
 
     if image_path and resp.status_code == 200:
+        print(f"DEBUG: Отправляем фото: {image_path}")  # <-- Добавь
         try:
             with open(image_path, "rb") as img:
                 files = {"photo": img}
                 data = {"chat_id": CHANNEL}
-                requests.post(f"{base_url}/sendPhoto", files=files, data=data)
+                resp_img = requests.post(f"{base_url}/sendPhoto", files=files, data=data)
+                print(f"DEBUG: sendPhoto status = {resp_img.status_code}")  # <-- Добавь
         except Exception as e:
             print(f"⚠️ Не удалось отправить картинку: {e}")
+    else:
+        print(f"DEBUG: sendPhoto не вызывается (image_path = {image_path}, resp.status = {resp.status_code})")
 
 # === MAIN ===
 if __name__ == "__main__":
