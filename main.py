@@ -136,17 +136,17 @@ def generate_post_with_llm(title, summary):
     prompt = PROMPT_TEMPLATE.format(title=title, summary=summary)
 
     print("📝 Отправляю промпт в Qwen2.5-7B...")
-    
-    # client = InferenceClient(token=os.environ["HF_TOKEN"])  # <-- Так было
+
     hf_token = os.environ.get("HF_TOKEN")
     if not hf_token:
         print("❌ HF_TOKEN не найден!")
-        return fallback_text
+        # Определи fallback_text здесь
+        fallback_text = f"Батенька опять в новостях: {title}. А мне-то чё? У меня гараж есть. За Родину-мать не стыдно рвать! 🇷🇺\n\nПРОМПТ ДЛЯ КАРТИНКИ: Русский мужик сидит на лавке у гаража, читает газету, рядом банка пива"
+        return fallback_text  # <-- Теперь точно сработает
+
     client = InferenceClient(token=hf_token)
-    
+
     try:
-        # Используем chat_completion с явным указанием модели
-        # Тот же вызов, что успешно работал в тестах!
         response = client.chat_completion(
             model="Qwen/Qwen2.5-7B-Instruct",
             messages=[{"role": "user", "content": prompt}],
@@ -159,7 +159,7 @@ def generate_post_with_llm(title, summary):
 
     except Exception as e:
         print(f"❌ Ошибка в LLM: {e}")
-        # Fallback - возвращаем простой текст
+        # Также определи fallback_text здесь
         fallback_text = f"Батенька опять в новостях: {title}. А мне-то чё? У меня гараж есть. За Родину-мать не стыдно рвать! 🇷🇺\n\nПРОМПТ ДЛЯ КАРТИНКИ: Русский мужик сидит на лавке у гаража, читает газету, рядом банка пива"
         return fallback_text
 
