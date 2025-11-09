@@ -6,6 +6,7 @@ import feedparser
 from datetime import datetime, timedelta
 import requests
 from huggingface_hub import InferenceClient
+import base64
 
 # === CONFIG ===
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
@@ -217,23 +218,24 @@ def generate_image_with_kandinsky(prompt):
 
             if status_data['status'] == 'DONE':
                 print("✅ Генерация завершена!")
-                print(f"DEBUG: status_data = {status_data}")  # <-- Добавь
-                image_url = status_data['result']['files'][0]
-                print(f"DEBUG: image_url = {image_url}")  # <-- Добавь
-                img_data = requests.get(image_url).content
+                print(f"DEBUG: status_data = {status_data}")  # <-- Отладка
+                # ИСПРАВЛЕНО: files[0] — это base64, а не URL
+                image_data = status_data['result']['files'][0]
+                print(f"DEBUG: image_data type = {type(image_data)}")  # <-- Отладка
+                img_data = base64.b64decode(image_data)
                 img_path = "/tmp/vitok_post.jpg"
                 with open(img_path, "wb") as f:
                     f.write(img_data)
                 print(f"✅ Изображение сохранено: {img_path}")
-                print(f"DEBUG: Файл существует: {os.path.exists(img_path)}")  # <-- Добавь
+                print(f"DEBUG: Файл существует: {os.path.exists(img_path)}")  # <-- Отладка
                 return img_path
             elif status_data['status'] == 'FAILED':
                 print(f"❌ Генерация изображения не удалась: {status_data.get('errorDescription', 'Unknown error')}")
-                print(f"DEBUG: status_data = {status_data}")  # <-- Добавь
+                print(f"DEBUG: status_data = {status_data}")  # <-- Отладка
                 return None
             else:
                 print(f"⏳ Статус: {status_data['status']}, ожидание...")
-                
+
         except Exception as e:
             print(f"❌ Ошибка при проверке статуса: {e}")
             return None
