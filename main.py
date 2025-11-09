@@ -131,33 +131,109 @@ def generate_post_with_llm(title, summary):
         return fallback_text
 # === KANDINSKY ===
 def generate_image_with_kandinsky(prompt):
-    url = "https://api.fusionbrain.ai/api/v1/text2image"
+    """
+    Генерация изображения через FusionBrain API (асинхронно)
+    """
+    # URL и заголовки
+    base_url = "https://api-key.fusionbrain.ai/"
+    api_key = os.environ.get("FUSIONBRAIN_API_KEY")
+    secret_key = os.environ.get("FUSIONBRAIN_SECRET_KEY", "")  # если не задан, пустая строка
+
+    if not api_key:
+        print("❌ FUSIONBRAIN_API_KEY не найден в переменных окружения")
+        return None
+
     headers = {
-        "X-Key": FB_API_KEY,
-        "Content-Type": "application/json"
+        'X-Key': f'Key {api_key}',
+        'X-Secret': f'Secret {secret_key}',
     }
-    payload = {
-        "model_id": "7582",
-        "params": {
-            "prompt": prompt + ", russian provincial town, humorous, detailed, no text, no letters",
-            "negative_prompt": "blurry, ugly, text, signature, watermark, deformed",
-            "width": 1024,
-            "height": 1024,
-            "steps": 30,
-            "seed": random.randint(1, 1000000)
+
+    # 1. Получаем список доступных моделей (pipeline_id)
+    try:
+        resp = requests.get(base_url + 'key/api/v1/pipelines', headers=headers)
+        if resp.status_code != 200:
+            print(f"❌ Ошибка получения списка моделей: {resp.status_code}, {resp.text}")
+            return None
+        pipelines = resp.json()
+        if not pipelines:
+            print("❌ Нет доступных моделей")
+            return None
+        # Берём первую доступную модель (обычно это Kandinsky 3.1)
+        pipeline_id = pipelines[0]['id']
+        print(f"✅ Используем модель: {pipelines[0]['name']} (ID: {pipeline_id})")
+    except Exception as e:
+        print(f"❌ Ошибка при получении pipeline_id: {e}")
+        return None
+
+    # 2. Подготовим параметры для генерации
+    params = {
+        "type": "GENERATE",
+        "numImages": 1,
+        "width": 1024,
+        "height": 1024,
+        "generateParams": {
+            "query": prompt + ", russian provincial town, humorous, detailed, no text, no letters",
+            "negativePromptDecoder": "blurry, ugly, text, signature, watermark, deformed"
         }
     }
 
-    response = requests.post(url, headers=headers, json=payload, timeout=120)
-    if response.status_code != 200:
-        raise Exception(f"Kandinsky error: {response.text}")
-    
-    image_url = response.json()["result"][0]["image_url"]
-    img_data = requests.get(image_url).content
-    img_path = "/tmp/vitok_post.jpg"
-    with open(img_path, "wb") as f:
-        f.write(img_data)
-    return img_path
+    # 3. Отправляем задачу на генерацию (multipart/form-data)
+    data = {
+        'pipeline_id': (None, pipeline_id),
+        'params': (None, json.dumps(params), 'application/json')
+    }
+
+    try:
+        resp = requests.post(base_url + 'key/api/v1/pipeline/run', headers=headers, files=data)
+        if resp.status_code != 200:
+            print(f"❌ Ошибка при отправке задачи: {resp.status_code}, {resp.text}")
+            return None
+        result = resp.json()
+        if 'uuid' not in result:
+            print(f"❌ Ошибка: нет uuid в ответе: {result}")
+            return None
+        uuid = result['uuid']
+        print(f"✅ Задача отправлена, UUID: {uuid}")
+    except Exception as e:
+        print(f"❌ Ошибка при отправке задачи на генерацию: {e}")
+        return None
+
+    # 4. Ждём завершения генерации
+    attempts = 10
+    delay = 10  # секунд
+    print(f"⏳ Ожидание генерации... (до {attempts * delay} секунд)")
+    while attempts > 0:
+        try:
+            resp = requests.get(base_url + f'key/api/v1/pipeline/status/{uuid}', headers=headers)
+            if resp.status_code != 200:
+                print(f"❌ Ошибка проверки статуса: {resp.status_code}, {resp.text}")
+                return None
+            status_data = resp.json()
+
+            if status_data['status'] == 'DONE':
+                print("✅ Генерация завершена!")
+                image_url = status_data['result']['files'][0]
+                img_data = requests.get(image_url).content
+                img_path = "/tmp/vitok_post.jpg"
+                with open(img_path, "wb") as f:
+                    f.write(img_data)
+                print(f"✅ Изображение сохранено: {img_path}")
+                return img_path
+            elif status_data['status'] == 'FAILED':
+                print(f"❌ Генерация изображения не удалась: {status_data.get('errorDescription', 'Unknown error')}")
+                return None
+            else:
+                print(f"⏳ Статус: {status_data['status']}, ожидание...")
+
+        except Exception as e:
+            print(f"❌ Ошибка при проверке статуса: {e}")
+            return None
+
+        attempts -= 1
+        time.sleep(delay)
+
+    print("❌ Превышено время ожидания генерации")
+    return None
 
 # === TELEGRAM ===
 def send_to_telegram(text, image_path=None):
