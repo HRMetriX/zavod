@@ -31,5 +31,6 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
           FUSIONBRAIN_API_KEY: ${{ secrets.FUSIONBRAIN_API_KEY }}
+          FUSIONBRAIN_SECRET_KEY: ${{ secrets.FUSIONBRAIN_SECRET_KEY }}  # <-- Нужно добавить!
           TELEGRAM_CHANNEL: "@notreviews"  # ← замени на свой!
         run: python main.py
