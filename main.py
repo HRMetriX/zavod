@@ -89,8 +89,12 @@ def save_seen(seen_set):
         }
     }
     try:
-        requests.patch(url, headers=headers, json=payload, timeout=10)
-        print("✅ seen.json обновлён в Gist")
+        resp = requests.patch(url, headers=headers, json=payload, timeout=10)
+        print(f"DEBUG: save_seen PATCH status: {resp.status_code}, response: {resp.text}")  # <-- Добавь
+        if resp.status_code == 200:
+            print("✅ seen.json обновлён в Gist")
+        else:
+            print(f"❌ Ошибка сохранения в Gist: {resp.status_code}")
     except Exception as e:
         print(f"⚠️ Ошибка сохранения в Gist: {e}")
 
