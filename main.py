@@ -138,12 +138,14 @@ def generate_image_with_kandinsky(prompt):
     # URL и заголовки
     base_url = "https://api-key.fusionbrain.ai/"
     api_key = os.environ.get("FUSIONBRAIN_API_KEY")
-    secret_key = os.environ.get("FUSIONBRAIN_SECRET_KEY")
+    secret_key = os.environ.get("FUSIONBRAIN_SECRET_KEY")  # <-- ВАЖНО
+    print(f"DEBUG: FUSIONBRAIN_API_KEY exists: {bool(api_key)}")
+    print(f"DEBUG: FUSIONBRAIN_SECRET_KEY exists: {bool(secret_key)}")
 
     if not api_key:
         print("❌ FUSIONBRAIN_API_KEY не найден в переменных окружения")
         return None
-    if not secret_key:
+    if not secret_key:  # <-- ВАЖНО: проверка на SECRET_KEY
         print("❌ FUSIONBRAIN_SECRET_KEY не найден в переменных окружения")
         return None
 
