@@ -197,32 +197,41 @@ def generate_image_with_kandinsky(prompt):
 # === TELEGRAM ===
 def send_to_telegram(text, image_path=None):
     base_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
+    print(f"DEBUG: Отправляем в чат {CHANNEL}, длина текста: {len(text)}")  # <-- Добавь
+    print(f"DEBUG: Первые 100 символов текста: {text[:100]}...")  # <-- И эту
     data = {
         "chat_id": CHANNEL,
         "text": text[:4096],
         "parse_mode": "HTML"
     }
-    requests.post(f"{base_url}/sendMessage", data=data)
+    resp = requests.post(f"{base_url}/sendMessage", data=data)
+    print(f"DEBUG: SendMessage status: {resp.status_code}, response: {resp.text}")  # <-- Замени на эту строку
 
     if image_path:
         try:
             with open(image_path, "rb") as img:
                 files = {"photo": img}
                 data = {"chat_id": CHANNEL}
-                requests.post(f"{base_url}/sendPhoto", files=files, data=data)
+                resp_img = requests.post(f"{base_url}/sendPhoto", files=files, data=data)
+                print(f"DEBUG: SendPhoto status: {resp_img.status_code}, response: {resp_img.text}")  # <-- Замени на эту
         except Exception as e:
             print(f"⚠️ Не удалось отправить картинку: {e}")
-
 # === MAIN ===
 if __name__ == "__main__":
     print("🔍 Загружаем уже обработанные новости из Gist...")
     seen_titles = load_seen()
-
+    print("DEBUG: Загруженные seen_titles:", seen_titles)  # <-- Добавь эту строку
+    print("DEBUG: Тип seen_titles:", type(seen_titles))    # <-- И эту (для уверенности)
+    
     print("🔍 Ищу свежие политические новости...")
     news = fetch_political_news(hours=1)
 
+    print("DEBUG: Найдено новостей:", len(news))  # <-- Добавь
+    print("DEBUG: Список новостей (только заголовки):", [n['title'] for n in news])  # <-- И эту (если хочешь видеть, что нашлось)
+
     if not news:
         print("😴 Нет свежих новостей за последний час.")
+        print("DEBUG: Перед сохранением (если exit):", seen_titles)  # <-- Добавь
         save_seen(seen_titles)
         exit(0)
 
@@ -254,6 +263,7 @@ if __name__ == "__main__":
         fallback_text = f"[⚠️ Ошибка в генерации]\n\n{full_output[:4000] if full_output else item['title']}"
         send_to_telegram(fallback_text)
 
+    print(f"DEBUG: Первые 100 символов текста: {text[:100]}...")  # <-- И эту
     save_seen(seen_titles)
 
 print("🏁 Скрипт завершён. Всего обработано новостей:", len(news))
