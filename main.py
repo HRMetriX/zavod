@@ -99,7 +99,7 @@ def generate_post_with_llm(title, summary):
 Вот новость: "{title}. {summary}"
 
 Напиши пост в стиле Витька. В конце добавь строку:  
-ПРОМПТ ДЛЯ КАРТИНКИ: [описание сцены в стиле российской провинции, с юмором, абсурдом, деталями, без текста на изображении, старайся избегать того, что может быть подвергнуто цензурой AI].
+ПРОМПТ ДЛЯ КАРТИНКИ: [описание сцены в стиле российской провинции, с юмором, абсурдом, деталями, без текста на изображении, старайся избегать того, что может быть подвергнуто цензурой AI. Описывай только сюжет/содержание/положение объектов изображения, не стиль].
 """
     prompt = PROMPT_TEMPLATE.format(title=title, summary=summary)
 
@@ -178,7 +178,7 @@ def generate_image_with_kandinsky(prompt):
         "height": 1024,
         "negativePromptDecoder": "blurry, ugly, text, signature, watermark, deformed",  # <-- ВНЕ generateParams
         "generateParams": {
-            "query": prompt + ", photorealistic, photojournalism style, natural lighting, high detail, candid composition, 35mm film aesthetic, shallow depth of field, Fujifilm Pro 400H tones, shot on Canon EOS R5, no text, no logos, no letters",
+            "query": prompt + ", photorealistic, photojournalism style, natural lighting, high detail, candid street photography, shallow depth of field, muted warm tones, grainy film look, 35mm equivalent lens perspective, documentary aesthetic, no text, no logos, no letters, no visible signage",
         }
     }
 
