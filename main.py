@@ -178,7 +178,7 @@ def generate_image_with_kandinsky(prompt):
         "height": 1024,
         "negativePromptDecoder": "blurry, ugly, text, signature, watermark, deformed",  # <-- ВНЕ generateParams
         "generateParams": {
-            "query": prompt + ", russian provincial town, humorous, detailed, no text, no letters",
+            "query": prompt + ", photorealistic, photojournalism style, natural lighting, high detail, candid composition, 35mm film aesthetic, shallow depth of field, Fujifilm Pro 400H tones, shot on Canon EOS R5, no text, no logos, no letters",
         }
     }
 
