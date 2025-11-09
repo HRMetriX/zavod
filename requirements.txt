@@ -2,3 +2,4 @@ feedparser==6.0.10
 requests==2.31.0
 openai
 huggingface_hub
+base64
