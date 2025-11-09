@@ -97,43 +97,84 @@ def generate_post_with_llm(title, summary):
 """
     prompt = PROMPT_TEMPLATE.format(title=title, summary=summary)
 
-    prompt = PROMPT_TEMPLATE.format(title=title, summary=summary)
-
     print("📝 Отправляю промпт в LLM:")
     print("-" * 50)
     print(prompt[:500] + "..." if len(prompt) > 500 else prompt)
     print("-" * 50)
 
     try:
-        # Используем InferenceClient из huggingface_hub
         HF_TOKEN = os.environ["HF_TOKEN"]
         MODEL_ID = "Qwen/Qwen2.5-7B-Instruct"
 
-        client = InferenceClient(
-            model=MODEL_ID,
-            token=HF_TOKEN
-        )
+        # URL для чат-моделей через HF Inference API
+        API_URL = f"https://api-inference.huggingface.co/models/{MODEL_ID}"
 
-        messages = [{"role": "user", "content": prompt}]
+        headers = {
+            "Authorization": f"Bearer {HF_TOKEN}",
+            "Content-Type": "application/json"
+        }
 
-        # Вызов API - УБРАН параметр timeout
-        completion = client.chat.completions.create(
-            messages=messages,
-            model=MODEL_ID,
-            temperature=0.9,
-            max_tokens=600,
-            # timeout=60  # <-- Этот параметр убран
-        )
+        # Подготовка payload для чат-модели
+        payload = {
+            "inputs": prompt, # Некоторые чат-модели могут ожидать inputs, а не messages
+            "parameters": {
+                "temperature": 0.9,
+                "max_new_tokens": 600, # Используем max_new_tokens вместо max_tokens
+                # "return_full_text": False, # Обычно по умолчанию False для генерации
+            },
+            "options": {
+                "wait_for_model": True # Ждать загрузки модели, если она выгружена
+            }
+        }
 
-        # Извлечение результата
-        result = completion.choices[0].message.content.strip()
+        # Альтернативный payload для API, поддерживающего формат messages (если первый не сработает)
+        # payload = {
+        #     "messages": [{"role": "user", "content": prompt}],
+        #     "parameters": {
+        #         "temperature": 0.9,
+        #         "max_new_tokens": 600,
+        #     },
+        #     "options": {
+        #         "wait_for_model": True
+        #     }
+        # }
+
+        response = requests.post(API_URL, headers=headers, json=payload, timeout=60)
+        response.raise_for_status() # Вызывает исключение, если статус != 200
+
+        result_json = response.json()
+        print(f"Ответ от API: {result_json}") # Для отладки
+
+        # Обработка ответа
+        # Формат ответа может отличаться в зависимости от модели и API
+        # Обычно это список словарей или один словарь
+        if isinstance(result_json, list) and len(result_json) > 0:
+            generated_text = result_json[0].get("generated_text", "")
+        elif isinstance(result_json, dict):
+            # Попробуем ключи, которые могут использоваться
+            generated_text = result_json.get("generated_text", "")
+            # Если ключ 'generated_text' не найден, возможно, используется формат для chat
+            # В этом случае результат может быть в 'choices' или напрямую в 'message'
+            if not generated_text and 'choices' in result_json:
+                generated_text = result_json['choices'][0]['message']['content']
+        else:
+            raise ValueError(f"Неожиданный формат ответа от API: {result_json}")
+
+        # Убираем исходный промпт из результата, если он возвращается
+        if generated_text.startswith(prompt):
+            generated_text = generated_text[len(prompt):].strip()
 
         print("✅ LLM вернул ответ:")
         print("-" * 50)
-        print(result[:500] + "..." if len(result) > 500 else result)
+        print(generated_text[:500] + "..." if len(generated_text) > 500 else generated_text)
         print("-" * 50)
-        return result
+        return generated_text
 
+    except requests.exceptions.HTTPError as e:
+        print(f"❌ ОШИБКА HTTP при вызове LLM: {e}")
+        print(f"Статус код: {e.response.status_code}")
+        print(f"Тело ответа: {e.response.text}")
+        raise
     except Exception as e:
         print("❌ ОШИБКА при вызове LLM:")
         print(f"Тип: {type(e).__name__}")
