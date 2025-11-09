@@ -100,14 +100,17 @@ def generate_post_with_llm(title, summary):
 
     print("📝 Отправляю промпт в Qwen2.5-7B через InferenceClient...")
     
-    client = InferenceClient(token=os.environ["HF_TOKEN"])
+    # Инициализация клиента БЕЗ токена
+    client = InferenceClient()
     
     try:
         response = client.chat_completion(
             model="Qwen/Qwen2.5-7B-Instruct",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=600,
-            temperature=0.9
+            temperature=0.9,
+            # Передача токена в методе
+            api_key=os.environ["HF_TOKEN"]
         )
         result = response.choices[0].message.content.strip()
         print("✅ LLM ответил успешно")
