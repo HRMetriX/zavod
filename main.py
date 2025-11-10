@@ -235,20 +235,16 @@ def generate_image_with_kandinsky(prompt):
 
             if status_data['status'] == 'DONE':
                 print("✅ Генерация завершена!")
-                print(f"DEBUG: status_data = {status_data}")  # <-- Отладка
                 # ИСПРАВЛЕНО: files[0] — это base64, а не URL
                 image_data = status_data['result']['files'][0]
-                print(f"DEBUG: image_data type = {type(image_data)}")  # <-- Отладка
                 img_data = base64.b64decode(image_data)
                 img_path = "/tmp/vitok_post.jpg"
                 with open(img_path, "wb") as f:
                     f.write(img_data)
                 print(f"✅ Изображение сохранено: {img_path}")
-                print(f"DEBUG: Файл существует: {os.path.exists(img_path)}")  # <-- Отладка
                 return img_path
             elif status_data['status'] == 'FAILED':
                 print(f"❌ Генерация изображения не удалась: {status_data.get('errorDescription', 'Unknown error')}")
-                print(f"DEBUG: status_data = {status_data}")  # <-- Отладка
                 return None
             else:
                 print(f"⏳ Статус: {status_data['status']}, ожидание...")
