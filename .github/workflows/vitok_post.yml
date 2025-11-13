@@ -23,7 +23,7 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install feedparser requests openai huggingface_hub==0.36.0
+        run: pip install feedparser requests openai huggingface_hub==0.36.0 Pillow
 
       - name: Run Vitok Bot
         env:

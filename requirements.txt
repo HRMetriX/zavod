@@ -3,3 +3,4 @@ requests==2.31.0
 openai
 huggingface_hub
 base64
+requirements.txt
