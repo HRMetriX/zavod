@@ -8,6 +8,7 @@ import requests
 from huggingface_hub import InferenceClient
 import base64
 
+'''
 # === CONFIG ===
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 HF_TOKEN = os.environ["HF_TOKEN"]
@@ -23,7 +24,8 @@ RSS_SOURCES = [
 
 # === GIST STATE MANAGEMENT ===
 GIST_ID = "5944017a021bcea90b63cf408a0324e5"
-
+'''
+'''
 def load_seen():
     url = f"https://api.github.com/gists/{GIST_ID}"
     headers = {"Authorization": f"token {GIST_TOKEN}"}
@@ -96,7 +98,8 @@ def fetch_political_news(hours=1):
         except Exception as e:
             print(f"Ошибка парсинга {url}: {e}")
     return fresh
-
+'''
+'''
 # === LLM ===
 def generate_post_with_llm(title, summary):
     """Генерация поста через Hugging Face Inference API (Qwen2.5 via Together)"""
@@ -287,6 +290,7 @@ def send_to_telegram(text, image_path=None):
         }
         resp = requests.post(f"{base_url}/sendMessage", data=data)
         print(f"DEBUG: sendMessage status = {resp.status_code}")  # <-- Отладка
+'''
 
 # === MAIN ===
 if __name__ == "__main__":
