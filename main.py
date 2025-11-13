@@ -7,10 +7,6 @@ from datetime import datetime, timedelta
 import requests
 from huggingface_hub import InferenceClient
 import base64
-import utils
-import config
-import content_fabric
-
 
 # === CONFIG ===
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
