@@ -10,8 +10,8 @@ import base64
 from config import *
 
 def load_seen():
-    url = f"https://api.github.com/gists/{GIST_ID}"
-    headers = {"Authorization": f"token {GIST_TOKEN}"}
+    url = f"https://api.github.com/gists/{config.GIST_ID}"
+    headers = {"Authorization": f"token {config.GIST_TOKEN}"}
     try:
         resp = requests.get(url, headers=headers, timeout=10)
         if resp.status_code == 200:
