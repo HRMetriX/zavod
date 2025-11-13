@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import requests
 from huggingface_hub import InferenceClient
 import base64
+from PIL import Image
 
 # === CONFIG ===
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
@@ -319,7 +320,7 @@ def generate_post_with_llm(title, summary):
 
 
 
-
+'''
 # === KANDINSKY ===
 def generate_image_with_kandinsky(prompt):
     """
@@ -430,6 +431,55 @@ def generate_image_with_kandinsky(prompt):
 
     print("❌ Превышено время ожидания генерации")
     return None
+'''
+
+# === HF IMAGE GENERATION ===
+def generate_image_with_hf(prompt):
+    """
+    Генерация изображения через Hugging Face Inference API (синхронно).
+    Использует HF_TOKEN из переменных окружения.
+    """
+    hf_token = os.environ.get("HF_TOKEN") # <-- Используем тот же HF_TOKEN
+    if not hf_token:
+        print("❌ HF_TOKEN не найден в переменных окружения")
+        return None
+
+    # Добавим к промпту стиль, который был в старом Kandinsky (можно адаптировать)
+    full_prompt = prompt + ", photorealistic, photojournalism style, natural lighting, high detail, candid street photography, shallow depth of field, muted warm tones, subtle film grain, 35mm lens look, documentary realism, clear facial details, lifelike human expressions, everyday realism, no text, no logos, no letters, no visible signage"
+
+    from huggingface_hub import InferenceClient
+
+    client = InferenceClient(
+        model="stabilityai/stable-diffusion-xl-base-1.0", # <-- Выбранная модель
+        token=hf_token,
+    )
+
+    try:
+        print("🎨 Генерирую изображение через HF Inference API (SDXL)...")
+        image_obj = client.text_to_image(
+            prompt=full_prompt,
+            negative_prompt="blurry, ugly, text, signature, watermark, deformed", # <-- Отрицательный промпт
+        )
+
+        # Обработка возвращаемого объекта (может быть bytes или PIL.Image)
+        img_path = "/tmp/vitok_post_hf.jpg"
+        if isinstance(image_obj, bytes):
+            print("✅ Получены байты изображения")
+            with open(img_path, "wb") as f:
+                f.write(image_obj)
+        elif hasattr(image_obj, 'save'): # Проверяем, является ли объект PIL.Image
+            print("✅ Получен PIL Image объект")
+            image_obj.save(img_path, format="JPEG") # Явно указываем формат
+        else:
+            print(f"❌ Неожиданный тип возвращаемого объекта: {type(image_obj)}")
+            return None
+
+        print(f"✅ Изображение HF сохранено: {img_path}")
+        return img_path
+
+    except Exception as e:
+        print(f"❌ Ошибка в HF Image Gen: {e}")
+        return None
 
 # === TELEGRAM ===
 def send_to_telegram(text, image_path=None):
@@ -487,7 +537,7 @@ if __name__ == "__main__":
 
         # Разделение уже внутри функции, просто используем возвращаемые значения
         print("🎨 Генерирую картинку...")
-        img_path = generate_image_with_kandinsky(img_prompt)
+        img_path = generate_image_with_hf(img_prompt)
 
         print("📤 Постим в Telegram...")
         send_to_telegram(text, img_path)
