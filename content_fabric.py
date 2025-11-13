@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import requests
 from huggingface_hub import InferenceClient
 import base64
+from config import *
 
 # === LLM ===
 def generate_post_with_llm(title, summary):
@@ -65,7 +66,7 @@ def generate_image_with_kandinsky(prompt):
     Генерация изображения через FusionBrain API (асинхронно)
     """
     # URL и заголовки
-    base_url = "https://api-key.fusionbrain.ai/"
+    base_url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}"
     api_key = os.environ.get("FUSIONBRAIN_API_KEY")
     secret_key = os.environ.get("FUSIONBRAIN_SECRET_KEY")
 
