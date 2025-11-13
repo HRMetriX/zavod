@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import requests
 from huggingface_hub import InferenceClient
 import base64
-from config import *
+import config
 
 def load_seen():
     url = f"https://api.github.com/gists/{config.GIST_ID}"
