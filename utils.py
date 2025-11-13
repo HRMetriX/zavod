@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import requests
 from huggingface_hub import InferenceClient
 import base64
-from utils import *
+from config import *
 
 def load_seen():
     url = f"https://api.github.com/gists/{GIST_ID}"
@@ -25,8 +25,8 @@ def load_seen():
         return set()
 
 def save_seen(seen_set):
-    url = f"https://api.github.com/gists/{GIST_ID}"
-    headers = {"Authorization": f"token {GIST_TOKEN}"}
+    url = f"https://api.github.com/gists/{config.GIST_ID}"
+    headers = {"Authorization": f"token {config.GIST_TOKEN}"}
     payload = {
         "files": {
             "seen.json": {
