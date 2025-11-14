@@ -300,8 +300,8 @@ def generate_post_with_llm(title, summary):
         print("✅ LLM v2 ответил успешно")
 
         # 4. Разделить вывод на текст поста и промпт для картинки
-        if "ПРОМПТ ДЛЯ КАРТИНКИ:" in full_output:
-            text_part, img_prompt_raw = full_output.split("ПРОМПТ ДЛЯ КАРТИНКИ:", 1)
+        if "PROMPT FOR IMAGE:" in full_output:
+            text_part, img_prompt_raw = full_output.split("PROMPT FOR IMAGE:", 1)
             text = text_part.strip()
             img_prompt = img_prompt_raw.strip().strip("[]\"' ")
         else:
