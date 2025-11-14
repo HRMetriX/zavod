@@ -44,11 +44,11 @@ SYSTEM_PROMPT_HERE = """
 ВАЖНО для ПРОМПТА ДЛЯ КАРТИНКИ (который будет после 'PROMPT FOR IMAGE:'):
 - Промпт на английском языке.
 - Краткий, структурированный, с ключевыми деталями сцены (люди, объекты, окружение, позы).
-- НЕ должен быть портретом или изображением лица.
+- НЕ должен быть портретом
 - Сцена должна отражать суть новости и лор Витька (провинциальный, абсурдный, бытовой).
 - Только сюжет, позы, объекты и окружение.
 - Избегай упоминания стиля, техники, брендов, оружия, политических символов, текста в кадре.
-- Пример структуры: [Ключевой объект/субъект], [действие/поза], [окружение/обстановка], [важные детали], [качество изображения].
+- Пример структуры: [Ключевой объект/субъект], [действие/поза], [окружение/обстановка], [качество изображения].
 """
 
 
@@ -341,7 +341,7 @@ def generate_image_with_hf(prompt):
 
     # 3. Подготовить negative_prompt
     # Включаем "repeated scene, same as before" как основной способ избежать повторов
-    negative_prompt = "blurry, text, deformed, portrait, close-up shot, repeated scene, same as before, cropped, low quality, low resolution, out of focus"
+    negative_prompt = "text, deformed, portrait, low quality, low resolution, out of focus"
 
     client = InferenceClient(
         model="stabilityai/stable-diffusion-xl-base-1.0",
