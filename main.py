@@ -306,7 +306,7 @@ def generate_post_with_llm(title, summary):
             img_prompt = img_prompt_raw.strip().strip("[]\"' ")
         else:
             text = full_output
-            img_prompt = "A Russian man on a bench in a small town, reading news, beer bottle nearby, humorous style" # Заглушка
+            img_prompt = "Bird" # Заглушка
 
         # 5. Сохранить только что сгенерированный ТЕКСТ (без промпта для картинки) в историю
         save_history(text)
@@ -338,7 +338,7 @@ def generate_image_with_hf(prompt):
     history_part = f"DO NOT REPEAT: {', '.join(previous_prompts)}. " if previous_prompts else ""
 
     # 2. Подготовить стилевые параметры
-    style_part = ". Photorealistic, photojournalism style, natural lighting, high detail, candid street photography, muted warm tones, documentary realism, everyday realism, no text, no logos, no letters, no visible signage, sharp focus, highly detailed, intricate, 8k high definition, perfect composition"
+    style_part = ". Photorealistic, highly detailed, 8k high definition"
 
     # 3. Сформировать общий промпт по принципу: [Инструкция] + [Описание сцены] + [Стиль]
     # Это делает описание сцены центральным элементом, как в примерах ClipDrop
@@ -351,10 +351,10 @@ def generate_image_with_hf(prompt):
 
     try:
         print("🎨 Генерирую изображение через HF Inference API (SDXL)...")
-        print(f"   -> Full prompt: {full_prompt[:100]}...") # <-- Лог для отладки (первые 100 символов)
+        print(f"   -> Full prompt: {full_prompt[:2000]}...") # <-- Лог для отладки (первые 100 символов)
         image_obj = client.text_to_image(
             prompt=full_prompt.strip(), # <-- Убираем лишние пробелы
-            negative_prompt = "blurry, ugly, text, signature, watermark, deformed, portrait, face, woman, girl, man's face, bust shot, close-up shot, repeated scene, same as before, cropped, low quality, low resolution, out of focus, extra limbs, missing limbs, bad anatomy, extra fingers, missing fingers, fused fingers, bad hands, extra eyes, missing eyes, bad feet, extra ears, missing ears, bad proportions, cartoon, illustration, anime, 3d render, cgi, octane render, pixar style, cinematic, highly detailed, intricate, sharp focus, 8k, high definition, insane detail, unreal engine, video game, digital art, painting, drawing, watermark, logo, brand name, political symbol, weapon, gun, knife, explicit content", # <-- Добавлены элементы, которые нужно избегать
+            negative_prompt = "blurry, text, deformed, portrait, close-up shot, repeated scene, same as before, cropped, low quality, low resolution, out of focus", # <-- Добавлены элементы, которые нужно избегать
         )
 
         # Обработка возвращаемого объекта (может быть bytes или PIL.Image)
