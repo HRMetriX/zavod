@@ -86,6 +86,66 @@ def save_seen(seen_set):
     except Exception as e:
         print(f"⚠️ Ошибка сохранения в Gist: {e}")
 
+# === IMAGE PROMPTS HISTORY MANAGEMENT ===
+def load_image_prompts_history():
+    """
+    Загружает историю предыдущих промптов для изображений из Gist.
+    Возвращает список строк (последние N промптов).
+    """
+    url = f"https://api.github.com/gists/{GIST_ID}"
+    headers = {"Authorization": f"token {GIST_TOKEN}"}
+    try:
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            files = resp.json().get("files", {})
+            # Используем имя файла, которое ты создал
+            if "image_prompts_history.json" in files:
+                content = files["image_prompts_history.json"].get("content", "[]")
+                history_list = json.loads(content)
+                # Возвращаем список строк (промптов)
+                return history_list
+        return []  # Если файла нет или ошибка — возвращаем пустой список
+    except Exception as e:
+        print(f"⚠️ Ошибка загрузки image_prompts_history.json из Gist: {e}")
+        return []
+
+def save_image_prompt_to_history(new_prompt):
+    """
+    Добавляет новый промпт для изображения в историю и сохраняет её в Gist.
+    new_prompt: строка — новый промпт.
+    """
+    url = f"https://api.github.com/gists/{GIST_ID}"
+    headers = {"Authorization": f"token {GIST_TOKEN}"}
+
+    # Загрузить текущую историю промптов
+    current_history = load_image_prompts_history()
+
+    # Добавить новый промпт в начало списка (или в конец — как удобнее)
+    current_history.append(new_prompt)
+
+    # Ограничить размер истории (например, последние 10 промптов)
+    max_history_length = 10
+    if len(current_history) > max_history_length:
+        current_history = current_history[-max_history_length:]  # Оставить только последние N
+
+    # Подготовить payload для обновления
+    payload = {
+        "files": {
+            "image_prompts_history.json": {
+                "content": json.dumps(current_history, ensure_ascii=False, indent=2)
+            }
+        }
+    }
+
+    try:
+        resp = requests.patch(url, headers=headers, json=payload, timeout=10)
+        if resp.status_code == 200:
+            print("✅ image_prompts_history.json обновлён в Gist")
+        else:
+            print(f"❌ Ошибка сохранения image_prompts_history.json: {resp.status_code}")
+    except Exception as e:
+        print(f"⚠️ Ошибка сохранения image_prompts_history.json: {e}")
+
 # === NEWS PARSING ===
 def fetch_political_news(hours=1):
     keywords = [
@@ -251,14 +311,25 @@ def generate_image_with_hf(prompt):
     """
     Генерация изображения через Hugging Face Inference API (синхронно).
     Использует HF_TOKEN из переменных окружения.
+    Учитывает историю предыдущих промптов для избежания повторов.
     """
     hf_token = os.environ.get("HF_TOKEN") # <-- Используем тот же HF_TOKEN
     if not hf_token:
         print("❌ HF_TOKEN не найден в переменных окружения")
         return None
 
-    # Добавим к промпту стиль, который был в старом Kandinsky (можно адаптировать)
-    full_prompt = prompt + ", photorealistic, photojournalism style, natural lighting, high detail, candid street photography, shallow depth of field, muted warm tones, subtle film grain, 35mm lens look, documentary realism, clear facial details, lifelike human expressions, everyday realism, no text, no logos, no letters, no visible signage"
+    # 1. Загрузить историю предыдущих промптов
+    previous_prompts = load_image_prompts_history()
+    history_str = "\n".join(previous_prompts) if previous_prompts else "Пока нет предыдущих промптов."
+
+    # 2. Сформировать общий промпт с инструкцией НЕ повторяться
+    # Добавим к промпту стиль и инструкцию по истории
+    full_prompt = f"""
+    ПРЕДЫДУЩИЕ ОПИСАНИЯ СЦЕН: {history_str}
+    ВАЖНО: НЕ ПОВТОРЯЙ ЭТИ СЦЕНЫ ИЛИ ИХ ЧАСТИ! СОЗДАЙ НОВУЮ, УНИКАЛЬНУЮ СЦЕНУ.
+    Описание сцены: {prompt}
+    Стиль: photorealistic, photojournalism style, natural lighting, high detail, candid street photography, shallow depth of field, muted warm tones, subtle film grain, 35mm lens look, documentary realism, clear facial details, lifelike human expressions, everyday realism, no text, no logos, no letters, no visible signage
+    """
 
     from huggingface_hub import InferenceClient
 
@@ -270,7 +341,7 @@ def generate_image_with_hf(prompt):
     try:
         print("🎨 Генерирую изображение через HF Inference API (SDXL)...")
         image_obj = client.text_to_image(
-            prompt=full_prompt,
+            prompt=full_prompt.strip(), # <-- Убираем лишние пробелы
             negative_prompt="blurry, ugly, text, signature, watermark, deformed", # <-- Отрицательный промпт
         )
 
@@ -288,6 +359,10 @@ def generate_image_with_hf(prompt):
             return None
 
         print(f"✅ Изображение HF сохранено: {img_path}")
+
+        # 3. Сохранить ТЕКУЩИЙ промпт в историю (не full_prompt, а исходный)
+        save_image_prompt_to_history(prompt)
+
         return img_path
 
     except Exception as e:
