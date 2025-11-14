@@ -1,0 +1,48 @@
+name: Idea
+about: Общая идея или концепция
+title: "[IDEA] "
+labels: [idea]
+assignees: ''
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо за вашу идею! Пожалуйста, заполните форму ниже, чтобы мы могли лучше понять её суть.
+  - type: input
+    id: idea-title
+    attributes:
+      label: Название идеи
+      description: Кратко сформулируйте суть идеи
+      placeholder: Например, "Улучшить генерацию промптов для изображений"
+    validations:
+      required: true
+  - type: textarea
+    id: idea-description
+    attributes:
+      label: Описание идеи
+      description: Подробно опишите свою идею или концепцию
+      placeholder: Расскажите, что именно вы предлагаете...
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Цель
+      description: Какую задачу решает эта идея?
+      placeholder: Какую проблему или потребность она удовлетворяет?
+    validations:
+      required: true
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Реализация (предварительно)
+      description: Если есть мысли, как это можно реализовать — опишите.
+      placeholder: Какие шаги или подходы можно использовать?
+      render: markdown
+  - type: textarea
+    id: context
+    attributes:
+      label: Дополнительная информация
+      description: Контекст, примеры, вдохновение и т.д.
+      placeholder: Ссылки, скриншоты (можно вставить позже), мысли вслух...
+      render: markdown
