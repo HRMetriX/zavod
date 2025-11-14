@@ -99,14 +99,14 @@ def load_image_prompts_history():
         if resp.status_code == 200:
             files = resp.json().get("files", {})
             # Используем имя файла, которое ты создал
-            if "image_prompts_history.json" in files:
-                content = files["image_prompts_history.json"].get("content", "[]")
+            if "image_prompt.json" in files:
+                content = files["image_prompt.json"].get("content", "[]")
                 history_list = json.loads(content)
                 # Возвращаем список строк (промптов)
                 return history_list
         return []  # Если файла нет или ошибка — возвращаем пустой список
     except Exception as e:
-        print(f"⚠️ Ошибка загрузки image_prompts_history.json из Gist: {e}")
+        print(f"⚠️ Ошибка загрузки image_prompt.json из Gist: {e}")
         return []
 
 def save_image_prompt_to_history(new_prompt):
@@ -131,7 +131,7 @@ def save_image_prompt_to_history(new_prompt):
     # Подготовить payload для обновления
     payload = {
         "files": {
-            "image_prompts_history.json": {
+            "image_prompt.json": {
                 "content": json.dumps(current_history, ensure_ascii=False, indent=2)
             }
         }
@@ -140,11 +140,11 @@ def save_image_prompt_to_history(new_prompt):
     try:
         resp = requests.patch(url, headers=headers, json=payload, timeout=10)
         if resp.status_code == 200:
-            print("✅ image_prompts_history.json обновлён в Gist")
+            print("✅ image_prompt.json обновлён в Gist")
         else:
-            print(f"❌ Ошибка сохранения image_prompts_history.json: {resp.status_code}")
+            print(f"❌ Ошибка сохранения image_prompt.json: {resp.status_code}")
     except Exception as e:
-        print(f"⚠️ Ошибка сохранения image_prompts_history.json: {e}")
+        print(f"⚠️ Ошибка сохранения image_prompt.json: {e}")
 
 # === NEWS PARSING ===
 def fetch_political_news(hours=1):
