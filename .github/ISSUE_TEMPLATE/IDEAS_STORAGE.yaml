@@ -1,9 +1,9 @@
 # .github/ISSUE_TEMPLATE/idea.yml
 name: Idea
-about: Предложить новую идею для проекта
+# 'about: Предложить новую идею для проекта' <-- УДАЛЕНО, НЕПРАВИЛЬНО
 title: "[IDEA] "
 labels: [idea]
-# assignees: ''  # <-- Убрано, так как часто не нужно
+# assignees: ''  # <-- Обычно не указывается в шаблоне
 body:
   - type: markdown
     attributes:
