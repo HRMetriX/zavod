@@ -60,7 +60,7 @@ USER_PROMPT_HERE = """
 Напиши пост в стиле Витёка из Кайеркана — с новой локацией (не из списка выше), новой ситуацией или собеседником, и свежими разговорными формулировками. Не имитируй стиль или структуру прошлых постов — опирайся только на лор и текущую новость.
 
 В конце добавь на английском языке:  
-PROMPT FOR IMAGE: [English, short, structured scene description. Must reflect the news topic and Vitok's setting (Russian provinces, everyday absurdity). FocusFocus on [Main Subject/Action related to news], [Environment/Setting in Vitok's region], [Key Objects]. Emphasize composition and clarity. No style/brand mentions, no text in scene, no portrait.]
+PROMPT FOR IMAGE: [Краткое, структурированное описание сцены на английском языке, отражающее суть новости и лор Витька (провинциальный, бытовой). Опиши ключевых персонажей, их действия, окружение и важные детали. НЕ должно быть портретом.
 """
 
 # === GIST STATE MANAGEMENT ===
