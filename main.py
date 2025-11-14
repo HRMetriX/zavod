@@ -60,7 +60,7 @@ USER_PROMPT_HERE = """
 Напиши пост в стиле Витёка из Кайеркана — с новой локацией (не из списка выше), новой ситуацией или собеседником, и свежими разговорными формулировками. Не имитируй стиль или структуру прошлых постов — опирайся только на лор и текущую новость.
 
 В конце добавь на английском языке:  
-PROMPT FOR IMAGE: [English, short, structured scene description. Must reflect the news topic and Vitok's setting (Russian provinces, everyday absurdity). Focus on [Subject/Action related to news], [Local environment/setting], [Key objects]. No style/brand mentions, no text in scene, no portrait. Example: Man holding broken radio, sitting on bench near rusty UAZ, snowy landscape, humorous everyday scene.]
+PROMPT FOR IMAGE: [English, short, structured scene description. Must reflect the news topic and Vitok's setting (Russian provinces, everyday absurdity). FocusFocus on [Main Subject/Action related to news], [Environment/Setting in Vitok's region], [Key Objects]. Emphasize composition and clarity. No style/brand mentions, no text in scene, no portrait. Example: Man in winter coat arguing with another man near collapsed shed, holding paper, snowy yard, rusty barrels, wooden fence, rural setting, humorous conflict, candid photo style.]
 """
 
 # === GIST STATE MANAGEMENT ===
@@ -338,7 +338,7 @@ def generate_image_with_hf(prompt):
     history_part = f"DO NOT REPEAT: {', '.join(previous_prompts)}. " if previous_prompts else ""
 
     # 2. Подготовить стилевые параметры
-    style_part = "photorealistic, photojournalism style, natural lighting, high detail, candid street photography, shallow depth of field, muted warm tones, subtle film grain, 35mm lens look, documentary realism, clear facial details, lifelike human expressions, everyday realism, no text, no logos, no letters, no visible signage"
+    style_part = ". Photorealistic, photojournalism style, natural lighting, high detail, candid street photography, muted warm tones, documentary realism, everyday realism, no text, no logos, no letters, no visible signage, sharp focus, highly detailed, intricate, 8k high definition, perfect composition"
 
     # 3. Сформировать общий промпт по принципу: [Инструкция] + [Описание сцены] + [Стиль]
     # Это делает описание сцены центральным элементом, как в примерах ClipDrop
