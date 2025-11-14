@@ -383,7 +383,6 @@ def generate_image_with_hf(prompt):
 # === TELEGRAM ===
 def send_to_telegram(text, image_path=None):
     base_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
-    print(f"DEBUG: send_to_telegram вызвана, image_path = {image_path}")  # <-- Отладка
 
     if image_path:
         # Отправляем фото с подписью (caption = текст)
@@ -396,7 +395,6 @@ def send_to_telegram(text, image_path=None):
                     "parse_mode": "HTML"
                 }
                 resp_img = requests.post(f"{base_url}/sendPhoto", files=files, data=data)
-                print(f"DEBUG: sendPhoto status = {resp_img.status_code}")  # <-- Отладка
         except Exception as e:
             print(f"⚠️ Не удалось отправить картинку: {e}")
     else:
@@ -407,7 +405,6 @@ def send_to_telegram(text, image_path=None):
             "parse_mode": "HTML"
         }
         resp = requests.post(f"{base_url}/sendMessage", data=data)
-        print(f"DEBUG: sendMessage status = {resp.status_code}")  # <-- Отладка
 
 
 
@@ -433,8 +430,6 @@ if __name__ == "__main__":
         print("🧠 Генерирую пост через LLM (v2)...")  # <-- Уточнили лог
         # Новая функция возвращает кортеж (text, img_prompt)
         text, img_prompt = generate_post_with_llm(item["title"], item["summary"])  # <-- Вызов новой логики
-        print(f"DEBUG: Сгенерированный текст (длина {len(text)}): '{text}'")
-        print(f"DEBUG: Сгенерированный промпт для картинки (длина {len(img_prompt)}): '{img_prompt}'")
 
         # Разделение уже внутри функции, просто используем возвращаемые значения
         print("🎨 Генерирую картинку...")
