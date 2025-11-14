@@ -1,6 +1,6 @@
 # .github/ISSUE_TEMPLATE/idea.yml
 name: Idea
-# 'about: Предложить новую идею для проекта' <-- УДАЛЕНО, НЕПРАВИЛЬНО
+about: Предложить новую идею для проекта
 title: "[IDEA] "
 labels: [idea]
 # assignees: ''  # <-- Обычно не указывается в шаблоне
