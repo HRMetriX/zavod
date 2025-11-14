@@ -1,8 +1,9 @@
+# .github/ISSUE_TEMPLATE/idea.yml
 name: Idea
-about: Общая идея или концепция
+about: Предложить новую идею для проекта
 title: "[IDEA] "
 labels: [idea]
-assignees: ''
+# assignees: ''  # <-- Убрано, так как часто не нужно
 body:
   - type: markdown
     attributes:
