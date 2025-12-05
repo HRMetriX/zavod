@@ -5,9 +5,9 @@ on:
   workflow_dispatch:
 
   # Автозапуск в 10:00 и 18:00 по МСК (07:00 и 15:00 UTC)
-#  schedule:
-#    - cron: '0 7 * * *'   # 10:00 MSK
-#    - cron: '0 15 * * *'  # 18:00 MSK
+  schedule:
+    - cron: '0 7 * * *'   # 10:00 MSK
+    - cron: '0 15 * * *'  # 18:00 MSK
 
 jobs:
   post:
