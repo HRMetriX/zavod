@@ -346,7 +346,7 @@ def generate_image_with_hf(prompt):
     client = InferenceClient(
         # model="stabilityai/stable-diffusion-xl-base-1.0", говно качество
         # model="stabilityai/stable-diffusion-3.5-large", лимиты
-        model = "black-forest-labs/FLUX.1-dev"
+        model = "black-forest-labs/FLUX.1-dev",
         token=hf_token,
     )
 
