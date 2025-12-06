@@ -356,6 +356,11 @@ def generate_image_with_hf(prompt):
         image_obj = client.text_to_image(
             prompt=full_prompt,
             negative_prompt=negative_prompt,
+            # ДОБАВЛЕННЫЕ ПАРАМЕТРЫ ДЛЯ ЛУЧШЕГО КАЧЕСТВА:
+            num_inference_steps=40,      # Больше шагов = лучше детализация (по умолчанию 20-25)
+            guidance_scale=7.5,          # Сильнее следование промпту (по умолчанию 7.0)
+            height=1024,                 # Оптимальный размер для FLUX
+            width=1024,                  # Квадрат лучше для Telegram постов
         )
 
         # Обработка возвращаемого объекта (может быть bytes или PIL.Image)
