@@ -344,8 +344,9 @@ def generate_image_with_hf(prompt):
     negative_prompt = "text, deformed, portrait, low quality, low resolution, out of focus"
 
     client = InferenceClient(
-        # model="stabilityai/stable-diffusion-xl-base-1.0",
-        model="stabilityai/stable-diffusion-3.5-large",
+        # model="stabilityai/stable-diffusion-xl-base-1.0", говно качество
+        # model="stabilityai/stable-diffusion-3.5-large", лимиты
+        model = "black-forest-labs/FLUX.1-dev"
         token=hf_token,
     )
 
